@@ -10,8 +10,18 @@
   "favicon": "/favicon.svg",
   "navigation": [
     {
-      "group": "Phoenix",
-      "pages": ["api-reference/phoenix-payment"]
+      "group": "Getting Started",
+      "pages": ["introduction"]
+    },
+    {
+      "group": "Phoenix Payment",
+      "pages": [
+        "api-reference/overview",
+        "api-reference/integration-react",
+        "api-reference/integration-manual",
+        "api-reference/communication-protocol",
+        "api-reference/technical-requirements"
+      ]
     }
   ],
   "logo": {
@@ -28,7 +38,7 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "/api-reference/phoenix-payment"
+      "href": "/introduction"
     }
   },
   "footer": {
@@ -39,6 +49,6 @@
     }
   },
   "redirects": [
-    { "source": "/", "destination": "/api-reference/phoenix-payment" }
+    { "source": "/", "destination": "/introduction" }
   ]
 } 

@@ -1,0 +1,322 @@
+---
+title: 'React Component Integration'
+description: 'Learn how to integrate Phoenix using our pre-built React component'
+---
+
+Follow these steps to integrate using our pre-built React component.
+
+## Step 1: Download the Component
+
+You can download the `PhoenixPayment.tsx` file from our snippets or use the code below:
+
+<CodeGroup>
+```tsx PhoenixPayment.tsx
+import React, { useEffect, useRef } from 'react';
+
+interface PhoenixPaymentProps {
+  walletAddress: string;
+  amount: string;
+  accessToken?: string; // Optional token for returning users
+  accountId?: string; // Optional account ID for returning users
+  onClose: () => void;
+  onComplete: (success: boolean, transactionId?: string, data?: any) => void;
+}
+
+export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
+  walletAddress,
+  amount,
+  accessToken,
+  accountId,
+  onClose,
+  onComplete,
+}) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    // Handle messages from the iframe
+    const handleMessage = (event: MessageEvent) => {
+      // Verify origin for security
+      if (event.origin !== 'https://app-partner.phoenix.market') return;
+      
+      // Handle Teller Connect success message
+      if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
+        const { accessToken, accountId } = event.data.data;
+        // You might want to store these values or pass them to the parent component
+        onComplete(true, undefined, { accessToken, accountId });
+      }
+      // Handle transaction success message
+      else if (event.data?.type === 'TRANSACTION_SUCCESS') {
+        const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
+        onComplete(true, transactionHash, { 
+          amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [onComplete]);
+
+  // Build iframe URL with all parameters
+  const getIframeUrl = () => {
+    let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+    
+    // Add optional parameters if provided
+    if (accessToken) {
+      url += `&accessToken=${accessToken}`;
+    }
+    if (accountId) {
+      url += `&accountId=${accountId}`;
+    }
+    
+    return url;
+  };
+
+  return (
+    <div className="phoenix-payment-container">
+      <div className="payment-overlay">
+        <div className="payment-modal">
+          <button 
+            className="close-button" 
+            onClick={onClose}
+            aria-label="Close payment window"
+          >
+            &times;
+          </button>
+          <iframe
+            ref={iframeRef}
+            src={getIframeUrl()}
+            className="teller-iframe"
+            title="Phoenix Payment"
+            allow="clipboard-write"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PhoenixPayment;
+```
+</CodeGroup>
+
+Save this file to your project's component directory, for example:
+
+```
+/src/components/PhoenixPayment.tsx
+```
+
+<Info>
+  The component includes all necessary styling internally via the `<style>` tag, so you don't need to add any additional CSS.
+</Info>
+
+## Step 2: Implement the Component
+
+Follow these steps to implement the component in your application:
+
+### Step 2.1: Import the Component
+
+```tsx
+import { PhoenixPayment } from './components/PhoenixPayment';
+```
+
+### Step 2.2: Prepare Required and Optional Parameters
+
+Before adding the component, you need to collect the following information from your user:
+
+#### Required Parameters
+1. **walletAddress**: The Ethereum wallet address where the user wants to receive USDC
+2. **amount**: The amount in USD that the user wants to convert to USDC
+
+#### Optional Parameters (for returning users)
+1. **accessToken**: The access token obtained from a previous session
+2. **accountId**: The account ID obtained from a previous session
+
+You should create form inputs in your UI to collect the required information:
+
+```tsx
+// Example of collecting user input
+const [walletAddress, setWalletAddress] = useState('');
+const [amount, setAmount] = useState('');
+
+// Optional: For returning users
+const [accessToken, setAccessToken] = useState(localStorage.getItem('phoenix_access_token') || '');
+const [accountId, setAccountId] = useState(localStorage.getItem('phoenix_account_id') || '');
+
+// Form inputs
+<div>
+  <label htmlFor="wallet">Wallet Address:</label>
+  <input
+    id="wallet"
+    type="text"
+    value={walletAddress}
+    onChange={(e) => setWalletAddress(e.target.value)}
+    placeholder="0x..."
+  />
+</div>
+<div>
+  <label htmlFor="amount">Amount (USD):</label>
+  <input
+    id="amount"
+    type="number"
+    value={amount}
+    onChange={(e) => setAmount(e.target.value)}
+    placeholder="100"
+  />
+</div>
+```
+
+### Step 2.3: Add the Component to Your JSX
+
+Once you have collected these values, you can pass them to the PhoenixPayment component:
+
+```tsx
+<PhoenixPayment 
+  walletAddress={walletAddress}
+  amount={amount}
+  accessToken={accessToken} // Optional
+  accountId={accountId} // Optional
+  onClose={() => setShowPayment(false)}
+  onComplete={handlePaymentComplete}
+/>
+```
+
+### Step 2.4: Handle Payment Completion
+
+The `onComplete` callback now receives additional data depending on the type of completion:
+
+```tsx
+const handlePaymentComplete = (success, transactionId, data) => {
+  if (success) {
+    // For Teller connection success
+    if (data?.accessToken && data?.accountId) {
+      console.log('Teller connection successful:', data);
+      
+      // Store tokens for future use
+      localStorage.setItem('phoenix_access_token', data.accessToken);
+      localStorage.setItem('phoenix_account_id', data.accountId);
+      
+      // You might want to update your UI to show connected status
+    }
+    // For transaction success
+    else if (data?.transactionHash) {
+      console.log('Transaction successful:', data);
+      
+      // Transaction details available in data:
+      // - amount: The amount in USD
+      // - token: The token received (e.g., "USDC")
+      // - chain: The blockchain (e.g., "Base")
+      // - walletAddress: The receiving wallet address
+      // - sendAmount: The amount of tokens sent
+      // - transactionHash: The blockchain transaction hash
+      // - basescanLink: Link to view the transaction on Basescan
+      
+      // You might want to redirect to a success page or show transaction details
+    }
+  } else {
+    console.log('Payment failed or cancelled');
+  }
+  
+  setShowPayment(false);
+};
+```
+
+## Full Implementation Example
+
+Here's a complete example showing how all the pieces fit together:
+
+```tsx
+import { useState, useEffect } from 'react';
+import { PhoenixPayment } from './components/PhoenixPayment';
+
+function PaymentPage() {
+  const [walletAddress, setWalletAddress] = useState('');
+  const [amount, setAmount] = useState('');
+  const [showPayment, setShowPayment] = useState(false);
+  
+  // Get stored credentials for returning users (if available)
+  const [accessToken, setAccessToken] = useState('');
+  const [accountId, setAccountId] = useState('');
+  
+  // Load stored credentials on component mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem('phoenix_access_token');
+    const storedAccountId = localStorage.getItem('phoenix_account_id');
+    
+    if (storedToken) setAccessToken(storedToken);
+    if (storedAccountId) setAccountId(storedAccountId);
+  }, []);
+  
+  const handlePaymentComplete = (success, transactionId, data) => {
+    if (success) {
+      // For Teller connection success
+      if (data?.accessToken && data?.accountId) {
+        setAccessToken(data.accessToken);
+        setAccountId(data.accountId);
+        
+        // Store for future use
+        localStorage.setItem('phoenix_access_token', data.accessToken);
+        localStorage.setItem('phoenix_account_id', data.accountId);
+        
+        console.log('Bank account connected successfully');
+      }
+      // For transaction success
+      else if (data?.transactionHash) {
+        console.log(`Transaction successful: ${data.transactionHash}`);
+        console.log(`Amount: $${data.amount} ${data.token} on ${data.chain}`);
+        console.log(`Transaction link: ${data.basescanLink}`);
+        
+        // Show success message or redirect
+      }
+    } else {
+      console.log('Payment failed or cancelled');
+    }
+    
+    setShowPayment(false);
+  };
+  
+  return (
+    <>
+      {/* Form to collect wallet address and amount */}
+      <div>
+        <label htmlFor="wallet">Wallet Address:</label>
+        <input
+          id="wallet"
+          type="text"
+          value={walletAddress}
+          onChange={(e) => setWalletAddress(e.target.value)}
+          placeholder="0x..."
+        />
+      </div>
+      <div>
+        <label htmlFor="amount">Amount (USD):</label>
+        <input
+          id="amount"
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="100"
+        />
+      </div>
+      
+      <button onClick={() => setShowPayment(true)}>
+        Make Payment
+      </button>
+      
+      {showPayment && (
+        <PhoenixPayment 
+          walletAddress={walletAddress}
+          amount={amount}
+          accessToken={accessToken}
+          accountId={accountId}
+          onClose={() => setShowPayment(false)}
+          onComplete={handlePaymentComplete}
+        />
+      )}
+    </>
+  );
+} 

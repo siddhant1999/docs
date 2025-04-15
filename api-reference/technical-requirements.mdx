@@ -1,0 +1,117 @@
+---
+title: 'Technical Requirements'
+description: 'Technical specifications for proper Phoenix integration'
+---
+
+## Overview
+
+To ensure a successful integration with Phoenix, please adhere to the following technical requirements. These specifications are designed to provide optimal user experience and security.
+
+## Iframe Requirements
+
+<Check>
+  **Iframe dimensions**: Must be exactly 350px × 600px
+</Check>
+
+The Phoenix payment interface is designed for these specific dimensions. Using different dimensions may result in a poor user experience with content being cut off or unnecessarily spaced out.
+
+```html
+<iframe
+  src="https://app-partner.phoenix.market/"
+  style="width: 350px; height: 600px; border: none;"
+  title="Phoenix Payment"
+  allow="clipboard-write"
+></iframe>
+```
+
+## Security Requirements
+
+<Check>
+  **Origin validation**: Always verify message origins for security
+</Check>
+
+When receiving messages from the Phoenix iframe, always validate the origin to prevent cross-site scripting attacks:
+
+```javascript
+window.addEventListener('message', function(event) {
+  // IMPORTANT: Verify origin for security
+  if (event.origin !== 'https://app-partner.phoenix.market') return;
+  
+  // Process the message only if origin is valid
+  // ...
+});
+```
+
+## Parameter Requirements
+
+<Check>
+  **Required parameters**: Both wallet address and amount must be provided
+</Check>
+
+<Check>
+  **Optional parameters**: Access token and account ID can be provided for returning users
+</Check>
+
+The Phoenix payment iframe requires the following parameters:
+
+### Required Parameters
+1. **address**: A valid Ethereum wallet address
+2. **amount**: A valid USD amount (numeric value)
+
+### Optional Parameters
+1. **accessToken**: Access token from a previous successful Teller connection
+2. **accountId**: Account ID from a previous successful Teller connection
+
+```javascript
+// Example URL with all parameters
+const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+
+// For returning users, add these parameters to enable faster checkout
+if (accessToken && accountId) {
+  url += `&accessToken=${accessToken}&accountId=${accountId}`;
+}
+```
+
+<Tip>
+  Store the access token and account ID securely in your application's storage (e.g., localStorage) to enable a smoother experience for returning users.
+</Tip>
+
+## Browser Requirements
+
+Phoenix works with modern browsers including:
+
+- Chrome 85+
+- Firefox 80+
+- Safari 14+
+- Edge 85+
+
+## Network Requirements
+
+Your application should be served over HTTPS to ensure secure communication with the Phoenix payment iframe.
+
+## Production Deployment
+
+<Warning>
+  Always use the production URL for the Phoenix payment service in your production environment.
+</Warning>
+
+In development environments, you may use a staging URL provided by the Phoenix team. For production, always use:
+
+```
+https://app-partner.phoenix.market/
+```
+
+## Testing Your Integration
+
+Before going live, we recommend testing your integration with the following scenarios:
+
+1. **Bank connection flow**: Test the bank connection process and verify you receive the access token and account ID
+2. **Transaction flow**: Complete a payment from end to end with the transaction success message
+3. **Returning user flow**: Test using stored access token and account ID for a faster checkout experience
+4. **Parameter validation**: Test with invalid parameters to ensure proper error handling
+5. **Message handling**: Ensure proper handling of all message types
+6. **Security validation**: Verify message origin validation
+
+## Support
+
+For technical assistance with your integration, contact Phoenix support at main@phoenix.market 
