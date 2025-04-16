@@ -14,12 +14,15 @@ You can download the `PhoenixPayment.tsx` file from our snippets or use the code
 import React, { useEffect, useRef } from 'react';
 
 interface PhoenixPaymentProps {
+  // Required parameters
   walletAddress: string;
   amount: string;
-  accessToken?: string; // Optional token for returning users
-  accountId?: string; // Optional account ID for returning users
   onClose: () => void;
   onComplete: (success: boolean, transactionId?: string, data?: any) => void;
+  
+  // Optional parameters
+  accessToken?: string; // Optional token for returning users
+  accountId?: string; // Optional account ID for returning users
 }
 
 export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
@@ -96,6 +99,62 @@ export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
           />
         </div>
       </div>
+      <style>{`
+        .phoenix-payment-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1000;
+        }
+        
+        .payment-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        
+        .payment-modal {
+          position: relative;
+          background-color: white;
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .close-button {
+          position: absolute;
+          top: -15px;
+          right: -15px;
+          background-color: #333;
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+          font-size: 18px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1;
+        }
+        
+        .teller-iframe {
+          width: 350px;
+          height: 600px;
+          border: none;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+      `}</style>
     </div>
   );
 };
@@ -126,15 +185,17 @@ import { PhoenixPayment } from './components/PhoenixPayment';
 
 ### Step 2.2: Prepare Required and Optional Parameters
 
-Before adding the component, you need to collect the following information from your user:
+Before adding the component, you need to collect the following information:
 
 #### Required Parameters
-1. **walletAddress**: The Ethereum wallet address where the user wants to receive USDC
-2. **amount**: The amount in USD that the user wants to convert to USDC
+- `walletAddress`: The Ethereum wallet address where USDC will be sent
+- `amount`: The amount in USD to convert to USDC
+- `onClose`: Function to handle when the user closes the payment modal
+- `onComplete`: Callback function to handle payment completion events
 
 #### Optional Parameters (for returning users)
-1. **accessToken**: The access token obtained from a previous session
-2. **accountId**: The account ID obtained from a previous session
+- `accessToken`: Access token obtained from a previous session
+- `accountId`: Account ID obtained from a previous session
 
 You should create form inputs in your UI to collect the required information:
 
@@ -146,28 +207,6 @@ const [amount, setAmount] = useState('');
 // Optional: For returning users
 const [accessToken, setAccessToken] = useState(localStorage.getItem('phoenix_access_token') || '');
 const [accountId, setAccountId] = useState(localStorage.getItem('phoenix_account_id') || '');
-
-// Form inputs
-<div>
-  <label htmlFor="wallet">Wallet Address:</label>
-  <input
-    id="wallet"
-    type="text"
-    value={walletAddress}
-    onChange={(e) => setWalletAddress(e.target.value)}
-    placeholder="0x..."
-  />
-</div>
-<div>
-  <label htmlFor="amount">Amount (USD):</label>
-  <input
-    id="amount"
-    type="number"
-    value={amount}
-    onChange={(e) => setAmount(e.target.value)}
-    placeholder="100"
-  />
-</div>
 ```
 
 ### Step 2.3: Add the Component to Your JSX
@@ -196,7 +235,7 @@ const handlePaymentComplete = (success, transactionId, data) => {
     if (data?.accessToken && data?.accountId) {
       console.log('Teller connection successful:', data);
       
-      // Store tokens for future use
+      // Store tokens for future use if desired
       localStorage.setItem('phoenix_access_token', data.accessToken);
       localStorage.setItem('phoenix_account_id', data.accountId);
       
@@ -207,7 +246,7 @@ const handlePaymentComplete = (success, transactionId, data) => {
       console.log('Transaction successful:', data);
       
       // Transaction details available in data:
-      // - amount: The amount in USD
+      // - amount: The USD amount
       // - token: The token received (e.g., "USDC")
       // - chain: The blockchain (e.g., "Base")
       // - walletAddress: The receiving wallet address

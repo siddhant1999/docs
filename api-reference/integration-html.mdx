@@ -1,0 +1,441 @@
+---
+title: 'HTML Integration'
+description: 'Learn how to integrate Phoenix using vanilla HTML and JavaScript'
+---
+
+For non-React frameworks or custom implementations, follow this HTML integration guide.
+
+## Step 1: Add the iframe to your HTML
+
+```html
+<div id="payment-container" style="display: none;">
+  <div class="payment-overlay">
+    <div class="payment-modal">
+      <button 
+        id="cancel-payment-button"
+        class="close-button"
+        aria-label="Close payment window"
+      >
+        &times;
+      </button>
+      <iframe
+        id="phoenix-payment-iframe"
+        src="https://app-partner.phoenix.market/"
+        class="teller-iframe"
+        title="Phoenix Payment"
+        allow="clipboard-write"
+      ></iframe>
+    </div>
+  </div>
+</div>
+```
+
+## Step 2: Add Essential CSS
+
+Add this CSS to style the payment container and iframe:
+
+```css
+/* Phoenix Payment Styles */
+#payment-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
+
+.payment-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.payment-modal {
+  position: relative;
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.close-button {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.teller-iframe {
+  width: 350px;
+  height: 600px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+```
+
+## Step 3: Add JavaScript for Communication
+
+You need to add JavaScript functions to handle the integration. Here's a breakdown of the required parameters and functions:
+
+### Required and Optional Parameters
+
+#### Required Parameters
+- `walletAddress`: The Ethereum wallet address where USDC will be sent
+- `amount`: The amount in USD to convert to USDC
+- `onClose`: Function to handle when the user closes the payment modal
+- `handlePaymentMessage`: Function to process payment response messages
+
+#### Optional Parameters (for returning users)
+- `accessToken`: Token from previous successful bank connection
+- `accountId`: Account ID from previous successful bank connection
+
+### Core Functions
+
+```javascript
+// 1. Function to show payment iframe with parameters
+// This function takes the wallet address, amount, and optional parameters, sets up the iframe, and displays it
+function showPayment(walletAddress, amount, accessToken, accountId) {
+  const iframe = document.getElementById('phoenix-payment-iframe');
+  const container = document.getElementById('payment-container');
+  
+  // Build iframe URL with all parameters
+  let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+  
+  // Add optional parameters if provided
+  if (accessToken) {
+    url += `&accessToken=${accessToken}`;
+  }
+  if (accountId) {
+    url += `&accountId=${accountId}`;
+  }
+  
+  // Set iframe src
+  iframe.src = url;
+  
+  // Display the container that holds the iframe
+  container.style.display = 'block';
+  
+  // Set up event listener for messages from the iframe
+  window.addEventListener('message', handlePaymentMessage);
+  
+  // Set up cancel button functionality
+  document.getElementById('cancel-payment-button').onclick = hidePayment;
+}
+
+// 2. Function to handle messages received from the iframe
+// This processes payment completions and failures
+function handlePaymentMessage(event) {
+  // IMPORTANT: Verify origin for security to prevent cross-site scripting attacks
+  // This should match the domain where your Phoenix payment iframe is hosted
+  if (event.origin !== 'https://app-partner.phoenix.market') return;
+  
+  // Handle Teller Connect success message
+  if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
+    const { accessToken, accountId } = event.data.data;
+    
+    // Store these credentials using your preferred storage method
+    console.log('Bank connected successfully:', accessToken, accountId);
+    
+    // You might want to update your UI to show the bank is connected
+    hidePayment();
+  }
+  // Handle transaction success message
+  else if (event.data?.type === 'TRANSACTION_SUCCESS') {
+    const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
+    
+    console.log('Transaction successful:', transactionHash);
+    console.log(`Amount: $${amount} ${token} on ${chain}`);
+    console.log(`Transaction link: ${basescanLink}`);
+    
+    // You should store transaction details in your database
+    // and update your UI to show the payment was successful
+    hidePayment();
+  }
+}
+
+// 3. Function to hide the payment iframe
+// This cleans up the UI and removes event listeners
+function hidePayment() {
+  document.getElementById('payment-container').style.display = 'none';
+  // IMPORTANT: Remove event listener to prevent memory leaks
+  window.removeEventListener('message', handlePaymentMessage);
+}
+```
+
+### Connecting Everything
+
+Add this script to connect your form to the payment flow:
+
+```javascript
+// Set up the button click handler to start the payment process
+document.getElementById('start-payment').addEventListener('click', function() {
+  // Get values from form inputs
+  const walletAddress = document.getElementById('wallet').value;
+  const amount = document.getElementById('amount').value;
+  
+  // Get optional stored tokens (if available)
+  const accessToken = localStorage.getItem('phoenix_access_token');
+  const accountId = localStorage.getItem('phoenix_account_id');
+  
+  // Validate inputs (basic validation)
+  if (!walletAddress || !amount) {
+    alert('Please enter both wallet address and amount');
+    return;
+  }
+  
+  // Start payment process with collected values
+  showPayment(walletAddress, amount, accessToken, accountId);
+});
+```
+
+## Complete Implementation Example
+
+Here's a complete example showing how to implement the Phoenix payment in an HTML page:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phoenix Payment Demo</title>
+  <style>
+    /* Basic page styling */
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .input-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    button {
+      background-color: #16A34A;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    /* Phoenix Payment Styles */
+    #payment-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .payment-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .payment-modal {
+      position: relative;
+      background-color: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    .close-button {
+      position: absolute;
+      top: -15px;
+      right: -15px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+    
+    .teller-iframe {
+      width: 350px;
+      height: 600px;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+  </style>
+</head>
+<body>
+  <h1>Phoenix Payment Demo</h1>
+  
+  <div class="input-group">
+    <label for="wallet">Wallet Address:</label>
+    <input id="wallet" type="text" placeholder="0x...">
+  </div>
+  
+  <div class="input-group">
+    <label for="amount">Amount (USD):</label>
+    <input id="amount" type="number" placeholder="100">
+  </div>
+  
+  <button id="start-payment">Make Payment</button>
+  
+  <!-- Payment Container (Hidden by default) -->
+  <div id="payment-container">
+    <div class="payment-overlay">
+      <div class="payment-modal">
+        <button 
+          id="cancel-payment-button" 
+          class="close-button"
+          aria-label="Close payment window"
+        >
+          &times;
+        </button>
+        <iframe
+          id="phoenix-payment-iframe"
+          src="about:blank"
+          class="teller-iframe"
+          title="Phoenix Payment"
+          allow="clipboard-write"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Function to show payment iframe with parameters
+    function showPayment(walletAddress, amount, accessToken, accountId) {
+      const iframe = document.getElementById('phoenix-payment-iframe');
+      const container = document.getElementById('payment-container');
+      
+      // Build iframe URL with all parameters
+      let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+      
+      // Add optional parameters if provided
+      if (accessToken) {
+        url += `&accessToken=${accessToken}`;
+      }
+      if (accountId) {
+        url += `&accountId=${accountId}`;
+      }
+      
+      // Set iframe src
+      iframe.src = url;
+      
+      // Display the container that holds the iframe
+      container.style.display = 'block';
+      
+      // Set up event listener for messages from the iframe
+      window.addEventListener('message', handlePaymentMessage);
+      
+      // Set up cancel button functionality
+      document.getElementById('cancel-payment-button').onclick = hidePayment;
+    }
+    
+    // Function to handle messages received from the iframe
+    function handlePaymentMessage(event) {
+      // IMPORTANT: Verify origin for security
+      if (event.origin !== 'https://app-partner.phoenix.market') return;
+      
+      // Handle Teller Connect success message
+      if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
+        const { accessToken, accountId } = event.data.data;
+        
+        // Store these credentials using your preferred storage method
+        localStorage.setItem('phoenix_access_token', accessToken);
+        localStorage.setItem('phoenix_account_id', accountId);
+        
+        console.log('Bank connected successfully');
+        
+        // You might want to update your UI to show the bank is connected
+        hidePayment();
+      }
+      // Handle transaction success message
+      else if (event.data?.type === 'TRANSACTION_SUCCESS') {
+        const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
+        
+        console.log('Transaction successful:', transactionHash);
+        console.log(`Amount: $${amount} ${token} on ${chain}`);
+        console.log(`Transaction link: ${basescanLink}`);
+        
+        // You should store transaction details in your database
+        // and update your UI to show the payment was successful
+        hidePayment();
+      }
+    }
+    
+    // Function to hide the payment iframe
+    function hidePayment() {
+      document.getElementById('payment-container').style.display = 'none';
+      // IMPORTANT: Remove event listener to prevent memory leaks
+      window.removeEventListener('message', handlePaymentMessage);
+    }
+    
+    // Set up the button click handler
+    document.getElementById('start-payment').addEventListener('click', function() {
+      // Get values from form inputs
+      const walletAddress = document.getElementById('wallet').value;
+      const amount = document.getElementById('amount').value;
+      
+      // Get optional stored tokens (if available)
+      const accessToken = localStorage.getItem('phoenix_access_token');
+      const accountId = localStorage.getItem('phoenix_account_id');
+      
+      // Validate inputs
+      if (!walletAddress || !amount) {
+        alert('Please enter both wallet address and amount');
+        return;
+      }
+      
+      // Start payment process with collected values
+      showPayment(walletAddress, amount, accessToken, accountId);
+    });
+  </script>
+</body>
+</html> 

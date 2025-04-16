@@ -1,0 +1,272 @@
+---
+title: 'React Native Integration'
+description: 'Learn how to integrate Phoenix payments in your React Native application'
+---
+
+## React Native Integration
+
+Integrate Phoenix payments into your React Native app with our WebView-based solution.
+
+### Step 1: Install Required Dependencies
+
+```bash
+# Install the WebView package
+npm install react-native-webview
+
+# For iOS, install pods
+cd ios && pod install && cd ..
+```
+
+### Step 2: Add the Phoenix Payment Component
+
+Create a file named `PhoenixPayment.tsx` in your components directory:
+
+```tsx
+import React, { useRef, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Modal, Platform } from 'react-native';
+import { WebView } from 'react-native-webview';
+
+interface PhoenixPaymentProps {
+  walletAddress: string;
+  amount: string;
+  accessToken?: string; // Optional token for returning users
+  accountId?: string; // Optional account ID for returning users
+  onClose: () => void;
+  onComplete: (success: boolean, transactionId?: string, data?: any) => void;
+}
+
+export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
+  walletAddress,
+  amount,
+  accessToken,
+  accountId,
+  onClose,
+  onComplete,
+}) => {
+  const webViewRef = useRef<WebView>(null);
+
+  // Build WebView URL with all parameters
+  const getWebViewUrl = () => {
+    let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+    
+    // Add optional parameters if provided
+    if (accessToken) {
+      url += `&accessToken=${accessToken}`;
+    }
+    if (accountId) {
+      url += `&accountId=${accountId}`;
+    }
+    
+    return url;
+  };
+
+  // Handle messages from WebView
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      
+      // Handle Teller Connect success message
+      if (data?.type === 'TELLER_CONNECT_SUCCESS') {
+        const { accessToken, accountId } = data.data;
+        // You might want to store these values or pass them to the parent component
+        onComplete(true, undefined, { accessToken, accountId });
+      }
+      // Handle transaction success message
+      else if (data?.type === 'TRANSACTION_SUCCESS') {
+        const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = data.data;
+        onComplete(true, transactionHash, { 
+          amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
+        });
+      }
+    } catch (error) {
+      console.error('Error parsing WebView message:', error);
+    }
+  };
+
+  // Inject JavaScript to listen for postMessage events and forward them to React Native
+  const injectedJavaScript = `
+    window.addEventListener('message', function(event) {
+      if (event.origin === 'https://app-partner.phoenix.market') {
+        window.ReactNativeWebView.postMessage(JSON.stringify(event.data));
+      }
+    });
+    true; // note: this is required, or you'll sometimes get silent failures
+  `;
+
+  return (
+    <Modal
+      visible={true}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <View style={styles.container}>
+        <View style={styles.paymentModal}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={onClose}
+              accessibilityLabel="Close payment window"
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <WebView
+            ref={webViewRef}
+            source={{ uri: getWebViewUrl() }}
+            style={styles.webView}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            originWhitelist={['*']}
+            injectedJavaScript={injectedJavaScript}
+            onMessage={handleWebViewMessage}
+            incognito={false}
+            thirdPartyCookiesEnabled={true}
+            allowsInlineMediaPlayback={true}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paymentModal: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    width: '90%',
+    height: '80%',
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  closeButton: {
+    padding: 5,
+  },
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  webView: {
+    flex: 1,
+  },
+});
+
+export default PhoenixPayment;
+```
+
+### Step 3: Use the Component
+
+To use the PhoenixPayment component, you'll need to provide the following props:
+
+#### Required Props
+- `walletAddress`: The Ethereum wallet address where USDC will be sent
+- `amount`: The amount in USD to convert to USDC
+- `onClose`: Function to call when the user closes the payment modal
+- `onComplete`: Callback function that receives the payment result
+
+#### Optional Props
+- `accessToken`: Token from previous successful bank connection
+- `accountId`: Account ID from previous successful bank connection
+
+#### Example of Displaying the Payment Modal
+
+```tsx
+{showPayment && (
+  <PhoenixPayment
+    walletAddress={walletAddress}
+    amount={amount}
+    accessToken={accessToken}  // Optional
+    accountId={accountId}      // Optional
+    onClose={() => setShowPayment(false)}
+    onComplete={handlePaymentComplete}
+  />
+)}
+```
+
+#### Handling Payment Response
+
+The `onComplete` callback receives three parameters:
+1. `success`: Boolean indicating if the operation succeeded
+2. `transactionId`: Transaction hash (only for successful payments)
+3. `data`: Object containing additional information
+
+```tsx
+const handlePaymentComplete = (success, transactionId, data) => {
+  if (success) {
+    // Case 1: Bank connected successfully
+    if (data?.accessToken && data?.accountId) {
+      // Store these credentials using your preferred storage method
+      // These tokens allow returning users to skip the bank connection step
+      console.log('Bank connection tokens:', data.accessToken, data.accountId);
+    }
+    // Case 2: Transaction completed successfully
+    else if (data?.transactionHash) {
+      // Transaction details available in data:
+      // - amount: The USD amount
+      // - token: The token type (e.g., "USDC")
+      // - chain: The blockchain network
+      // - walletAddress: The recipient wallet
+      // - sendAmount: The amount of tokens sent
+      // - transactionHash: The blockchain transaction hash
+      // - basescanLink: Link to view the transaction
+      console.log('Transaction completed:', data.transactionHash);
+    }
+  }
+  
+  // Close the payment modal
+  setShowPayment(false);
+};
+```
+
+### Platform Configuration
+
+#### iOS
+
+Add to your `Info.plist`:
+
+```xml
+<key>NSAppTransportSecurity</key>
+<dict>
+  <key>NSExceptionDomains</key>
+  <dict>
+    <key>app-partner.phoenix.market</key>
+    <dict>
+      <key>NSExceptionAllowsInsecureHTTPLoads</key>
+      <false/>
+      <key>NSIncludesSubdomains</key>
+      <true/>
+    </dict>
+  </dict>
+</dict>
+```
+
+#### Android
+
+Add to your `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+``` 

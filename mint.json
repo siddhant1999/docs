@@ -18,7 +18,8 @@
       "pages": [
         "api-reference/overview",
         "api-reference/integration-react",
-        "api-reference/integration-manual",
+        "api-reference/integration-react-native",
+        "api-reference/integration-html",
         "api-reference/communication-protocol",
         "api-reference/technical-requirements"
       ]

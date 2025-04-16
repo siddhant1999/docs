@@ -5,21 +5,25 @@ description: 'Learn about the Phoenix payment system integration options'
 
 ## Integration Implementation Guide
 
-There are two methods for integrating Phoenix into your application:
+There are three methods for integrating Phoenix into your application:
 
 1. **React Component** - A pre-built React component that you can drop into your application
-2. **Manual Integration** - A vanilla JavaScript approach for other frameworks or custom implementations
+2. **React Native Component** - A pre-built React Native component for iOS and Android apps
+3. **HTML Integration** - A vanilla HTML/JavaScript approach for other frameworks or custom implementations
 
 Choose the integration method that best fits your tech stack and requirements.
 
 ## Available Integrations
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="React Component" icon="react" href="/api-reference/integration-react">
-    Pre-built React component that handles the payment flow
+    Pre-built React component for web applications
   </Card>
-  <Card title="Manual Integration" icon="code" href="/api-reference/integration-manual">
-    Vanilla JavaScript implementation for other frameworks
+  <Card title="React Native" icon="mobile" href="/api-reference/integration-react-native">
+    Integration with WebView for iOS and Android apps
+  </Card>
+  <Card title="HTML Integration" icon="code" href="/api-reference/integration-html">
+    Plain HTML/JavaScript implementation for any web application
   </Card>
 </CardGroup>
 
