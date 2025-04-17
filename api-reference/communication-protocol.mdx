@@ -12,16 +12,6 @@ The Phoenix payment iframe communicates with your application through the `windo
 The Phoenix payment iframe will send messages to your application to indicate the status of different processes:
 
 <CodeGroup>
-```javascript Teller Connect Success
-{
-  type: 'TELLER_CONNECT_SUCCESS',
-  data: {
-    accessToken: 'your-access-token',
-    accountId: 'your-account-id'
-  }
-}
-```
-
 ```javascript Transaction Success
 {
   type: 'TRANSACTION_SUCCESS',
@@ -47,18 +37,8 @@ window.addEventListener('message', function(event) {
   // IMPORTANT: Verify origin for security
   if (event.origin !== 'https://app-partner.phoenix.market') return;
   
-  // Handle Teller Connect success message
-  if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
-    const { accessToken, accountId } = event.data.data;
-    
-    // Store these tokens for future use to skip reconnection
-    localStorage.setItem('phoenix_access_token', accessToken);
-    localStorage.setItem('phoenix_account_id', accountId);
-    
-    console.log('Bank account connected successfully');
-  }
   // Handle transaction success message
-  else if (event.data?.type === 'TRANSACTION_SUCCESS') {
+  if (event.data?.type === 'TRANSACTION_SUCCESS') {
     const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
     
     console.log('Transaction successful:', transactionHash);
@@ -75,7 +55,7 @@ window.addEventListener('message', function(event) {
 Parameters are passed from your application to the Phoenix payment iframe via URL query string:
 
 ```
-https://app-partner.phoenix.market/?address=0xWALLET_ADDRESS&amount=AMOUNT_IN_USD&accessToken=ACCESS_TOKEN&accountId=ACCOUNT_ID
+https://app-partner.phoenix.market/?address=0xWALLET_ADDRESS&amount=AMOUNT_IN_USD
 ```
 
 ### Required Parameters
@@ -85,13 +65,6 @@ https://app-partner.phoenix.market/?address=0xWALLET_ADDRESS&amount=AMOUNT_IN_US
 | `address` | The Ethereum wallet address where USDC will be sent | `0x742d35Cc6634C0532925a3b844Bc454e4438f44e` |
 | `amount` | The amount in USD that the user wants to convert to USDC | `100` |
 
-### Optional Parameters
-
-| Parameter | Description | Use Case |
-| --------- | ----------- | ------- |
-| `accessToken` | Access token from a previous session | For returning users to skip reconnection to their bank |
-| `accountId` | Account ID from a previous session | For returning users to skip reconnection to their bank |
-
 ## Security Considerations
 
 To ensure secure communication between your application and the Phoenix payment iframe:
@@ -99,5 +72,4 @@ To ensure secure communication between your application and the Phoenix payment 
 1. **Always verify the origin** of incoming messages to prevent cross-site scripting attacks
 2. **Use HTTPS** for all communication
 3. **Validate input parameters** before passing them to the iframe
-4. **Clean up event listeners** when the payment process is complete to prevent memory leaks
-5. **Store tokens securely** if saving access tokens and account IDs for returning users 
+4. **Clean up event listeners** when the payment process is complete to prevent memory leaks 
