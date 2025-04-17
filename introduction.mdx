@@ -96,6 +96,10 @@ Phoenix supports two payment flows to accommodate different user scenarios:
     <Info className="mt-4">
       This flow works with any bank that supports Zelle, providing universal coverage for your users.
     </Info>
+
+    <Note className="mt-4">
+      For security and transaction verification, we add a unique random number of cents (between \$0.00 and \$0.20) to each transaction amount. This helps us match and verify your specific payment among all incoming Zelle transactions.
+    </Note>
   </Tab>
 </Tabs>
 

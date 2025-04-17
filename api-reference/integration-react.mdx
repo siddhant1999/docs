@@ -7,163 +7,175 @@ Follow these steps to integrate using our pre-built React component.
 
 ## Step 1: Download the Component
 
-You can download the `PhoenixPayment.tsx` file from our snippets or use the code below:
+You can view the component code or download it directly:
 
-<CodeGroup>
-```tsx PhoenixPayment.tsx
-import React, { useEffect, useRef } from 'react';
+<AccordionGroup>
+  <Accordion title="View Component Code">
+    ```tsx PhoenixPayment.tsx
+    import React, { useEffect, useRef } from 'react';
 
-interface PhoenixPaymentProps {
-  // Required parameters
-  walletAddress: string;
-  amount: string;
-  apiKey: string; // Your API key
-  onClose: () => void;
-  onComplete: (success: boolean, transactionId?: string, data?: any) => void;
-  
-  // Optional parameters
-  accessToken?: string; // Optional token for returning users
-  accountId?: string; // Optional account ID for returning users
-}
-
-export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
-  walletAddress,
-  amount,
-  apiKey,
-  accessToken,
-  accountId,
-  onClose,
-  onComplete,
-}) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    // Handle messages from the iframe
-    const handleMessage = (event: MessageEvent) => {
-      // Verify origin for security
-      if (event.origin !== 'https://app-partner.phoenix.market') return;
+    interface PhoenixPaymentProps {
+      // Required parameters
+      walletAddress: string;
+      amount: string;
+      apiKey: string; // Your API key
+      onClose: () => void;
+      onComplete: (success: boolean, transactionId?: string, data?: any) => void;
       
-      // Handle Teller Connect success message
-      if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
-        const { accessToken, accountId } = event.data.data;
-        // You might want to store these values or pass them to the parent component
-        onComplete(true, undefined, { accessToken, accountId });
-      }
-      // Handle transaction success message
-      else if (event.data?.type === 'TRANSACTION_SUCCESS') {
-        const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
-        onComplete(true, transactionHash, { 
-          amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
-        });
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    
-    // Clean up
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [onComplete]);
-
-  // Build iframe URL with all parameters
-  const getIframeUrl = () => {
-    let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
-    
-    // Add optional parameters if provided
-    if (accessToken) {
-      url += `&accessToken=${accessToken}`;
+      // Optional parameters
+      accessToken?: string; // Optional token for returning users
+      accountId?: string; // Optional account ID for returning users
     }
-    if (accountId) {
-      url += `&accountId=${accountId}`;
-    }
-    
-    return url;
-  };
 
-  return (
-    <div className="phoenix-payment-container">
-      <div className="payment-overlay">
-        <div className="payment-modal">
-          <button 
-            className="close-button" 
-            onClick={onClose}
-            aria-label="Close payment window"
-          >
-            &times;
-          </button>
-          <iframe
-            ref={iframeRef}
-            src={getIframeUrl()}
-            className="teller-iframe"
-            title="Phoenix Payment"
-            allow="clipboard-write"
-          />
+    export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
+      walletAddress,
+      amount,
+      apiKey,
+      accessToken,
+      accountId,
+      onClose,
+      onComplete,
+    }) => {
+      const iframeRef = useRef<HTMLIFrameElement>(null);
+
+      useEffect(() => {
+        // Handle messages from the iframe
+        const handleMessage = (event: MessageEvent) => {
+          // Verify origin for security
+          if (event.origin !== 'https://app-partner.phoenix.market') return;
+          
+          // Handle Teller Connect success message
+          if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
+            const { accessToken, accountId } = event.data.data;
+            // You might want to store these values or pass them to the parent component
+            onComplete(true, undefined, { accessToken, accountId });
+          }
+          // Handle transaction success message
+          else if (event.data?.type === 'TRANSACTION_SUCCESS') {
+            const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
+            onComplete(true, transactionHash, { 
+              amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
+            });
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+        
+        // Clean up
+        return () => {
+          window.removeEventListener('message', handleMessage);
+        };
+      }, [onComplete]);
+
+      // Build iframe URL with all parameters
+      const getIframeUrl = () => {
+        let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
+        
+        // Add optional parameters if provided
+        if (accessToken) {
+          url += `&accessToken=${accessToken}`;
+        }
+        if (accountId) {
+          url += `&accountId=${accountId}`;
+        }
+        
+        return url;
+      };
+
+      return (
+        <div className="phoenix-payment-container">
+          <div className="payment-overlay">
+            <div className="payment-modal">
+              <button 
+                className="close-button" 
+                onClick={onClose}
+                aria-label="Close payment window"
+              >
+                &times;
+              </button>
+              <iframe
+                ref={iframeRef}
+                src={getIframeUrl()}
+                className="teller-iframe"
+                title="Phoenix Payment"
+                allow="clipboard-write"
+              />
+            </div>
+          </div>
+          <style>{`
+            .phoenix-payment-container {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              z-index: 1000;
+            }
+            
+            .payment-overlay {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background-color: rgba(0, 0, 0, 0.5);
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+            
+            .payment-modal {
+              position: relative;
+              background-color: white;
+              border-radius: 12px;
+              padding: 20px;
+              box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            }
+            
+            .close-button {
+              position: absolute;
+              top: -15px;
+              right: -15px;
+              background-color: #333;
+              color: white;
+              border: none;
+              border-radius: 50%;
+              width: 30px;
+              height: 30px;
+              font-size: 18px;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 1;
+            }
+            
+            .teller-iframe {
+              width: 350px;
+              height: 600px;
+              border: none;
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            }
+          `}</style>
         </div>
-      </div>
-      <style>{`
-        .phoenix-payment-container {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 1000;
-        }
-        
-        .payment-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.5);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-        
-        .payment-modal {
-          position: relative;
-          background-color: white;
-          border-radius: 12px;
-          padding: 20px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        }
-        
-        .close-button {
-          position: absolute;
-          top: -15px;
-          right: -15px;
-          background-color: #333;
-          color: white;
-          border: none;
-          border-radius: 50%;
-          width: 30px;
-          height: 30px;
-          font-size: 18px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1;
-        }
-        
-        .teller-iframe {
-          width: 350px;
-          height: 600px;
-          border: none;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-      `}</style>
-    </div>
-  );
-};
+      );
+    };
 
-export default PhoenixPayment;
-```
-</CodeGroup>
+    export default PhoenixPayment;
+    ```
+  </Accordion>
+</AccordionGroup>
+
+<div style={{ marginTop: '24px', marginBottom: '24px' }}>
+  <CardGroup>
+    <a href="https://app-partner.phoenix.market/public/download-phoenix.html" download style={{ textDecoration: 'none', minWidth: '400px', display: 'block' }} target="_blank" rel="noopener noreferrer">
+      <Card title="Download Component" icon="download">
+        Click to download PhoenixPayment.tsx
+      </Card>
+    </a>
+  </CardGroup>
+</div>
 
 Save this file to your project's component directory, for example:
 
@@ -202,16 +214,20 @@ Before adding the component, you need to collect the following information:
 
 You should create form inputs in your UI to collect the required information:
 
-```tsx
-// Example of collecting user input
-const [walletAddress, setWalletAddress] = useState('');
-const [amount, setAmount] = useState('');
-const [apiKey] = useState('YOUR_API_KEY'); // Replace with your API key
+<AccordionGroup>
+  <Accordion title="View Input Collection Example">
+    ```tsx
+    // Example of collecting user input
+    const [walletAddress, setWalletAddress] = useState('');
+    const [amount, setAmount] = useState('');
+    const [apiKey] = useState('YOUR_API_KEY'); // Replace with your API key
 
-// Optional: For returning users
-const [accessToken, setAccessToken] = useState(localStorage.getItem('phoenix_access_token') || '');
-const [accountId, setAccountId] = useState(localStorage.getItem('phoenix_account_id') || '');
-```
+    // Optional: For returning users
+    const [accessToken, setAccessToken] = useState(localStorage.getItem('phoenix_access_token') || '');
+    const [accountId, setAccountId] = useState(localStorage.getItem('phoenix_account_id') || '');
+    ```
+  </Accordion>
+</AccordionGroup>
 
 ### Step 2.3: Add the Component to Your JSX
 
@@ -233,6 +249,16 @@ Once you have collected these values, you can pass them to the PhoenixPayment co
 
 The `onComplete` callback now receives additional data depending on the type of completion:
 
+#### Transaction Success Data
+When a transaction is successful, the data object will contain:
+- `amount`: The USD amount
+- `token`: The token received (e.g., "USDC")
+- `chain`: The blockchain (e.g., "Base")
+- `walletAddress`: The receiving wallet address
+- `sendAmount`: The amount of tokens sent
+- `transactionHash`: The blockchain transaction hash
+- `basescanLink`: Link to view the transaction on Basescan
+
 ```tsx
 const handlePaymentComplete = (success, transactionId, data) => {
   if (success) {
@@ -250,15 +276,6 @@ const handlePaymentComplete = (success, transactionId, data) => {
     else if (data?.transactionHash) {
       console.log('Transaction successful:', data);
       
-      // Transaction details available in data:
-      // - amount: The USD amount
-      // - token: The token received (e.g., "USDC")
-      // - chain: The blockchain (e.g., "Base")
-      // - walletAddress: The receiving wallet address
-      // - sendAmount: The amount of tokens sent
-      // - transactionHash: The blockchain transaction hash
-      // - basescanLink: Link to view the transaction on Basescan
-      
       // You might want to redirect to a success page or show transaction details
       
       // Uncomment the following line if you want to close the window after transaction success
@@ -275,102 +292,106 @@ const handlePaymentComplete = (success, transactionId, data) => {
 
 ## Full Implementation Example
 
-Here's a complete example showing how all the pieces fit together:
+<AccordionGroup>
+  <Accordion title="View Complete Example">
+    Here's a complete example showing how all the pieces fit together:
 
-```tsx
-import { useState, useEffect } from 'react';
-import { PhoenixPayment } from './components/PhoenixPayment';
+    ```tsx
+    import { useState, useEffect } from 'react';
+    import { PhoenixPayment } from './components/PhoenixPayment';
 
-function PaymentPage() {
-  const [walletAddress, setWalletAddress] = useState('');
-  const [amount, setAmount] = useState('');
-  const [apiKey] = useState('YOUR_API_KEY'); // Replace with your API key
-  const [showPayment, setShowPayment] = useState(false);
-  
-  // Get stored credentials for returning users (if available)
-  const [accessToken, setAccessToken] = useState('');
-  const [accountId, setAccountId] = useState('');
-  
-  // Load stored credentials on component mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem('phoenix_access_token');
-    const storedAccountId = localStorage.getItem('phoenix_account_id');
-    
-    if (storedToken) setAccessToken(storedToken);
-    if (storedAccountId) setAccountId(storedAccountId);
-  }, []);
-  
-  const handlePaymentComplete = (success, transactionId, data) => {
-    if (success) {
-      // For Teller connection success
-      if (data?.accessToken && data?.accountId) {
-        setAccessToken(data.accessToken);
-        setAccountId(data.accountId);
-        
-        // Store for future use
-        localStorage.setItem('phoenix_access_token', data.accessToken);
-        localStorage.setItem('phoenix_account_id', data.accountId);
-        
-        console.log('Bank account connected successfully');
-      }
-      // For transaction success
-      else if (data?.transactionHash) {
-        console.log(`Transaction successful: ${data.transactionHash}`);
-        console.log(`Amount: $${data.amount} ${data.token} on ${data.chain}`);
-        console.log(`Transaction link: ${data.basescanLink}`);
-        
-        // Show success message or redirect
-        
-        // Uncomment the following line if you want to close the window after transaction success
-        // setShowPayment(false);
-      }
-    } else {
-      console.log('Payment failed or cancelled');
+    function PaymentPage() {
+      const [walletAddress, setWalletAddress] = useState('');
+      const [amount, setAmount] = useState('');
+      const [showPayment, setShowPayment] = useState(false);
       
-      // Uncomment the following line if you want to close the window after payment failure/cancellation
-      // setShowPayment(false);
+      // Get stored credentials for returning users (if available)
+      const [accessToken, setAccessToken] = useState('');
+      const [accountId, setAccountId] = useState('');
+      
+      // Load stored credentials on component mount
+      useEffect(() => {
+        const storedToken = localStorage.getItem('phoenix_access_token');
+        const storedAccountId = localStorage.getItem('phoenix_account_id');
+        
+        if (storedToken) setAccessToken(storedToken);
+        if (storedAccountId) setAccountId(storedAccountId);
+      }, []);
+      
+      const handlePaymentComplete = (success, transactionId, data) => {
+        if (success) {
+          // For Teller connection success
+          if (data?.accessToken && data?.accountId) {
+            setAccessToken(data.accessToken);
+            setAccountId(data.accountId);
+            
+            // Store for future use
+            localStorage.setItem('phoenix_access_token', data.accessToken);
+            localStorage.setItem('phoenix_account_id', data.accountId);
+            
+            console.log('Bank account connected successfully');
+          }
+          // For transaction success
+          else if (data?.transactionHash) {
+            console.log(`Transaction successful: ${data.transactionHash}`);
+            console.log(`Amount: $${data.amount} ${data.token} on ${data.chain}`);
+            console.log(`Transaction link: ${data.basescanLink}`);
+            
+            // Show success message or redirect
+            
+            // Uncomment the following line if you want to close the window after transaction success
+            // setShowPayment(false);
+          }
+        } else {
+          console.log('Payment failed or cancelled');
+          
+          // Uncomment the following line if you want to close the window after payment failure/cancellation
+          // setShowPayment(false);
+        }
+      };
+      
+      return (
+        <>
+          {/* Form to collect wallet address and amount */}
+          <div>
+            <label htmlFor="wallet">Wallet Address:</label>
+            <input
+              id="wallet"
+              type="text"
+              value={walletAddress}
+              onChange={(e) => setWalletAddress(e.target.value)}
+              placeholder="0x..."
+            />
+          </div>
+          <div>
+            <label htmlFor="amount">Amount (USD):</label>
+            <input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="100"
+            />
+          </div>
+          
+          <button onClick={() => setShowPayment(true)}>
+            Make Payment
+          </button>
+          
+          {showPayment && (
+            <PhoenixPayment 
+              walletAddress={walletAddress}
+              amount={amount}
+              apiKey={apiKey}
+              accessToken={accessToken}
+              accountId={accountId}
+              onClose={() => setShowPayment(false)}
+              onComplete={handlePaymentComplete}
+            />
+          )}
+        </>
+      );
     }
-  };
-  
-  return (
-    <>
-      {/* Form to collect wallet address and amount */}
-      <div>
-        <label htmlFor="wallet">Wallet Address:</label>
-        <input
-          id="wallet"
-          type="text"
-          value={walletAddress}
-          onChange={(e) => setWalletAddress(e.target.value)}
-          placeholder="0x..."
-        />
-      </div>
-      <div>
-        <label htmlFor="amount">Amount (USD):</label>
-        <input
-          id="amount"
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="100"
-        />
-      </div>
-      
-      <button onClick={() => setShowPayment(true)}>
-        Make Payment
-      </button>
-      
-      {showPayment && (
-        <PhoenixPayment 
-          walletAddress={walletAddress}
-          amount={amount}
-          apiKey={apiKey}
-          accessToken={accessToken}
-          accountId={accountId}
-          onClose={() => setShowPayment(false)}
-          onComplete={handlePaymentComplete}
-        />
-      )}
-    </>
-  );
-} 
+    ```
+  </Accordion>
+</AccordionGroup>

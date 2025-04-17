@@ -3,11 +3,9 @@ title: 'React Native Integration'
 description: 'Learn how to integrate Phoenix payments in your React Native application'
 ---
 
-## React Native Integration
+Follow these steps to integrate using our pre-built React Native component.
 
-Integrate Phoenix payments into your React Native app with our WebView-based solution.
-
-### Step 1: Install Required Dependencies
+## Step 1: Install Required Dependencies
 
 ```bash
 # Install the WebView package
@@ -17,205 +15,259 @@ npm install react-native-webview
 cd ios && pod install && cd ..
 ```
 
-### Step 2: Add the Phoenix Payment Component
+## Step 2: Download the Component
 
-Create a file named `PhoenixPayment.tsx` in your components directory:
+You can view the component code or download it directly:
+
+<AccordionGroup>
+  <Accordion title="View Component Code">
+    ```tsx PhoenixPaymentNative.tsx
+    import React, { useRef, useEffect } from 'react';
+    import { View, StyleSheet, TouchableOpacity, Text, Modal, Platform } from 'react-native';
+    import { WebView } from 'react-native-webview';
+
+    interface PhoenixPaymentNativeProps {
+      walletAddress: string;
+      amount: string;
+      apiKey: string; // Your API key
+      accessToken?: string; // Optional token for returning users
+      accountId?: string; // Optional account ID for returning users
+      onClose: () => void;
+      onComplete: (success: boolean, transactionId?: string, data?: any) => void;
+    }
+
+    export const PhoenixPaymentNative: React.FC<PhoenixPaymentNativeProps> = ({
+      walletAddress,
+      amount,
+      apiKey,
+      accessToken,
+      accountId,
+      onClose,
+      onComplete,
+    }) => {
+      const webViewRef = useRef<WebView>(null);
+
+      // Build WebView URL with all parameters
+      const getWebViewUrl = () => {
+        let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
+        
+        // Add optional parameters if provided
+        if (accessToken) {
+          url += `&accessToken=${accessToken}`;
+        }
+        if (accountId) {
+          url += `&accountId=${accountId}`;
+        }
+        
+        return url;
+      };
+
+      // Handle messages from WebView
+      const handleWebViewMessage = (event: any) => {
+        try {
+          const data = JSON.parse(event.nativeEvent.data);
+          
+          // Handle Teller Connect success message
+          if (data?.type === 'TELLER_CONNECT_SUCCESS') {
+            const { accessToken, accountId } = data.data;
+            // You might want to store these values or pass them to the parent component
+            onComplete(true, undefined, { accessToken, accountId });
+          }
+          // Handle transaction success message
+          else if (data?.type === 'TRANSACTION_SUCCESS') {
+            const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = data.data;
+            onComplete(true, transactionHash, { 
+              amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
+            });
+          }
+        } catch (error) {
+          console.error('Error parsing WebView message:', error);
+        }
+      };
+
+      // Inject JavaScript to listen for postMessage events and forward them to React Native
+      const injectedJavaScript = `
+        window.addEventListener('message', function(event) {
+          if (event.origin === 'https://app-partner.phoenix.market') {
+            window.ReactNativeWebView.postMessage(JSON.stringify(event.data));
+          }
+        });
+        true; // note: this is required, or you'll sometimes get silent failures
+      `;
+
+      return (
+        <Modal
+          visible={true}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={onClose}
+        >
+          <View style={styles.container}>
+            <View style={styles.paymentModal}>
+              <View style={styles.header}>
+                <TouchableOpacity 
+                  style={styles.closeButton} 
+                  onPress={onClose}
+                  accessibilityLabel="Close payment window"
+                >
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              <WebView
+                ref={webViewRef}
+                source={{ uri: getWebViewUrl() }}
+                style={styles.webView}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                originWhitelist={['*']}
+                injectedJavaScript={injectedJavaScript}
+                onMessage={handleWebViewMessage}
+                incognito={false}
+                thirdPartyCookiesEnabled={true}
+                allowsInlineMediaPlayback={true}
+              />
+            </View>
+          </View>
+        </Modal>
+      );
+    };
+
+    const styles = StyleSheet.create({
+      container: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      paymentModal: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        width: '90%',
+        height: '80%',
+        overflow: 'hidden',
+        ...Platform.select({
+          ios: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+          },
+          android: {
+            elevation: 5,
+          },
+        }),
+      },
+      header: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+      },
+      closeButton: {
+        padding: 5,
+      },
+      closeButtonText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+      },
+      webView: {
+        flex: 1,
+      },
+    });
+
+    export default PhoenixPaymentNative;
+    ```
+  </Accordion>
+</AccordionGroup>
+
+<div style={{ marginTop: '24px', marginBottom: '24px' }}>
+  <CardGroup>
+    <a href="https://app-partner.phoenix.market/public/download-phoenix-native.html" download style={{ textDecoration: 'none', minWidth: '400px', display: 'block' }} target="_blank" rel="noopener noreferrer">
+      <Card title="Download Component" icon="download">
+        Click to download PhoenixPaymentNative.tsx
+      </Card>
+    </a>
+  </CardGroup>
+</div>
+
+Save this file to your components directory, for example:
+```components/PhoenixPaymentNative.tsx```
+
+## Step 3: Implement the Component
+
+Follow these steps to implement the component in your application:
+
+### Step 3.1: Import the Component
 
 ```tsx
-import React, { useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Modal, Platform } from 'react-native';
-import { WebView } from 'react-native-webview';
-
-interface PhoenixPaymentProps {
-  walletAddress: string;
-  amount: string;
-  apiKey: string; // Your API key
-  accessToken?: string; // Optional token for returning users
-  accountId?: string; // Optional account ID for returning users
-  onClose: () => void;
-  onComplete: (success: boolean, transactionId?: string, data?: any) => void;
-}
-
-export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
-  walletAddress,
-  amount,
-  apiKey,
-  accessToken,
-  accountId,
-  onClose,
-  onComplete,
-}) => {
-  const webViewRef = useRef<WebView>(null);
-
-  // Build WebView URL with all parameters
-  const getWebViewUrl = () => {
-    let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
-    
-    // Add optional parameters if provided
-    if (accessToken) {
-      url += `&accessToken=${accessToken}`;
-    }
-    if (accountId) {
-      url += `&accountId=${accountId}`;
-    }
-    
-    return url;
-  };
-
-  // Handle messages from WebView
-  const handleWebViewMessage = (event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      
-      // Handle Teller Connect success message
-      if (data?.type === 'TELLER_CONNECT_SUCCESS') {
-        const { accessToken, accountId } = data.data;
-        // You might want to store these values or pass them to the parent component
-        onComplete(true, undefined, { accessToken, accountId });
-      }
-      // Handle transaction success message
-      else if (data?.type === 'TRANSACTION_SUCCESS') {
-        const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = data.data;
-        onComplete(true, transactionHash, { 
-          amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
-        });
-      }
-    } catch (error) {
-      console.error('Error parsing WebView message:', error);
-    }
-  };
-
-  // Inject JavaScript to listen for postMessage events and forward them to React Native
-  const injectedJavaScript = `
-    window.addEventListener('message', function(event) {
-      if (event.origin === 'https://app-partner.phoenix.market') {
-        window.ReactNativeWebView.postMessage(JSON.stringify(event.data));
-      }
-    });
-    true; // note: this is required, or you'll sometimes get silent failures
-  `;
-
-  return (
-    <Modal
-      visible={true}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <View style={styles.container}>
-        <View style={styles.paymentModal}>
-          <View style={styles.header}>
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={onClose}
-              accessibilityLabel="Close payment window"
-            >
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <WebView
-            ref={webViewRef}
-            source={{ uri: getWebViewUrl() }}
-            style={styles.webView}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            originWhitelist={['*']}
-            injectedJavaScript={injectedJavaScript}
-            onMessage={handleWebViewMessage}
-            incognito={false}
-            thirdPartyCookiesEnabled={true}
-            allowsInlineMediaPlayback={true}
-          />
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  paymentModal: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    width: '90%',
-    height: '80%',
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-      },
-      android: {
-        elevation: 5,
-      },
-    }),
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  closeButton: {
-    padding: 5,
-  },
-  closeButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  webView: {
-    flex: 1,
-  },
-});
-
-export default PhoenixPayment;
+import { PhoenixPaymentNative } from './components/PhoenixPaymentNative';
 ```
 
-### Step 3: Use the Component
+### Step 3.2: Prepare Required and Optional Parameters
 
-To use the PhoenixPayment component, you'll need to provide the following props:
+Before adding the component, you need to collect the following information:
 
-#### Required Props
+#### Required Parameters
 - `walletAddress`: The Ethereum wallet address where USDC will be sent
 - `amount`: The amount in USD to convert to USDC
-- `apiKey`: Required 10 character alphanumeric API key
-- `onClose`: Function to call when the user closes the payment modal
-- `onComplete`: Callback function that receives the payment result
+- `apiKey`: Your API key
+- `onClose`: Function to handle when the user closes the payment modal
+- `onComplete`: Callback function to handle payment completion events
 
-#### Optional Props
-- `accessToken`: Token from previous successful bank connection
-- `accountId`: Account ID from previous successful bank connection
+#### Optional Parameters (for returning users)
+- `accessToken`: Access token obtained from a previous session
+- `accountId`: Account ID obtained from a previous session
 
-#### Example of Displaying the Payment Modal
+You should create form inputs in your UI to collect the required information:
+
+<AccordionGroup>
+  <Accordion title="View Input Collection Example">
+    ```tsx
+    // Example of collecting user input
+    const [walletAddress, setWalletAddress] = useState('');
+    const [amount, setAmount] = useState('');
+    const [showPayment, setShowPayment] = useState(false);
+
+    // Optional: For returning users
+    const [accessToken, setAccessToken] = useState('');
+    const [accountId, setAccountId] = useState('');
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Step 3.3: Add the Component to Your JSX
+
+Once you have collected these values, you can pass them to the PhoenixPaymentNative component:
 
 ```tsx
-{showPayment && (
-  <PhoenixPayment
-    walletAddress={walletAddress}
-    amount={amount}
-    apiKey="YOUR_API_KEY"  // Replace with your API key
-    accessToken={accessToken}  // Optional
-    accountId={accountId}      // Optional
-    onClose={() => setShowPayment(false)}
-    onComplete={handlePaymentComplete}
-  />
-)}
+<PhoenixPaymentNative
+  walletAddress={walletAddress}
+  amount={amount}
+  apiKey="YOUR_API_KEY"  // Replace with your API key
+  accessToken={accessToken}  // Optional
+  accountId={accountId}      // Optional
+  onClose={() => setShowPayment(false)}
+  onComplete={handlePaymentComplete}
+/>
 ```
 
-#### Handling Payment Response
+### Step 3.4: Handle Payment Completion
 
 The `onComplete` callback receives three parameters:
 1. `success`: Boolean indicating if the operation succeeded
 2. `transactionId`: Transaction hash (only for successful payments)
 3. `data`: Object containing additional information
+
+#### Transaction Success Data
+When a transaction is successful, the data object will contain:
+- `amount`: The USD amount
+- `token`: The token type (e.g., "USDC")
+- `chain`: The blockchain network
+- `walletAddress`: The recipient wallet
+- `sendAmount`: The amount of tokens sent
+- `transactionHash`: The blockchain transaction hash
+- `basescanLink`: Link to view the transaction
 
 ```tsx
 const handlePaymentComplete = (success, transactionId, data) => {
@@ -223,19 +275,11 @@ const handlePaymentComplete = (success, transactionId, data) => {
     // Case 1: Bank connected successfully
     if (data?.accessToken && data?.accountId) {
       // Store these credentials using your preferred storage method
-      // These tokens allow returning users to skip the bank connection step
-      console.log('Bank connection tokens:', data.accessToken, data.accountId);
+      console.log('Bank account connected successfully');
+      // You might want to store the tokens for future use
     }
     // Case 2: Transaction completed successfully
     else if (data?.transactionHash) {
-      // Transaction details available in data:
-      // - amount: The USD amount
-      // - token: The token type (e.g., "USDC")
-      // - chain: The blockchain network
-      // - walletAddress: The recipient wallet
-      // - sendAmount: The amount of tokens sent
-      // - transactionHash: The blockchain transaction hash
-      // - basescanLink: Link to view the transaction
       console.log('Transaction completed:', data.transactionHash);
       
       // Uncomment the following line if you want to close the window after transaction success
@@ -278,4 +322,104 @@ Add to your `AndroidManifest.xml`:
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
-``` 
+```
+
+## Complete Implementation Example
+
+<AccordionGroup>
+  <Accordion title="View Complete Example">
+    Here's a complete example showing how to implement the Phoenix payment in a React Native app:
+
+    ```tsx
+    import React, { useState } from 'react';
+    import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+    import { PhoenixPaymentNative } from './components/PhoenixPaymentNative';
+
+    export default function PaymentScreen() {
+      const [walletAddress, setWalletAddress] = useState('');
+      const [amount, setAmount] = useState('');
+      const [showPayment, setShowPayment] = useState(false);
+      
+      const handlePaymentComplete = (success, transactionId, data) => {
+        if (success) {
+          // Case 1: Bank connected successfully
+          if (data?.accessToken && data?.accountId) {
+            // Store these credentials using your preferred storage method
+            console.log('Bank account connected successfully');
+            // You might want to store the tokens for future use
+          }
+          // Case 2: Transaction completed successfully
+          else if (data?.transactionHash) {
+            console.log('Transaction completed:', data.transactionHash);
+            
+            // Uncomment the following line if you want to close the window after transaction success
+            // setShowPayment(false);
+          }
+        } else {
+          console.log('Payment failed or cancelled');
+          
+          // Uncomment the following line if you want to close the window after payment failure/cancellation
+          // setShowPayment(false);
+        }
+      };
+
+      return (
+        <View style={styles.container}>
+          <Text style={styles.label}>Wallet Address:</Text>
+          <TextInput
+            style={styles.input}
+            value={walletAddress}
+            onChangeText={setWalletAddress}
+            placeholder="0x..."
+          />
+          
+          <Text style={styles.label}>Amount (USD):</Text>
+          <TextInput
+            style={styles.input}
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            placeholder="100"
+          />
+          
+          <Button
+            title="Make Payment"
+            onPress={() => setShowPayment(true)}
+          />
+          
+          {showPayment && (
+            <PhoenixPaymentNative
+              walletAddress={walletAddress}
+              amount={amount}
+              apiKey="YOUR_API_KEY"  // Replace with your API key
+              accessToken={accessToken}  // Optional
+              accountId={accountId}      // Optional
+              onClose={() => setShowPayment(false)}
+              onComplete={handlePaymentComplete}
+            />
+          )}
+        </View>
+      );
+    }
+
+    const styles = StyleSheet.create({
+      container: {
+        flex: 1,
+        padding: 20,
+      },
+      label: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 8,
+      },
+      input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 4,
+        padding: 8,
+        marginBottom: 16,
+      },
+    });
+    ```
+  </Accordion>
+</AccordionGroup> 
