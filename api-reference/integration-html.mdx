@@ -96,18 +96,12 @@ Add this CSS to style the payment container and iframe:
 
 You need to add JavaScript functions to handle the integration. Here's a breakdown of the required parameters and functions:
 
-### Required and Optional Parameters
-
-#### Required Parameters
+### Required Parameters
 - `walletAddress`: The Ethereum wallet address where USDC will be sent
 - `amount`: The amount in USD to convert to USDC
 - `apiKey`: Your API key
 - `onClose`: Function to handle when the user closes the payment modal
 - `handlePaymentMessage`: Function to process payment response messages
-
-#### Optional Parameters (for returning users)
-- `accessToken`: Token from previous successful bank connection
-- `accountId`: Account ID from previous successful bank connection
 
 ### Core Functions
 
@@ -122,21 +116,13 @@ When a transaction is successful, the data object will contain:
 - `basescanLink`: Link to view the transaction on Basescan
 
 ```javascript
-// 1. Function to show payment iframe with parameters
-function showPayment(walletAddress, amount, apiKey, accessToken, accountId) {
+// Function to show payment iframe with parameters
+function showPayment(walletAddress, amount, apiKey) {
   const iframe = document.getElementById('phoenix-payment-iframe');
   const container = document.getElementById('payment-container');
   
   // Build iframe URL with all parameters
-  let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
-  
-  // Add optional parameters if provided
-  if (accessToken) {
-    url += `&accessToken=${accessToken}`;
-  }
-  if (accountId) {
-    url += `&accountId=${accountId}`;
-  }
+  const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
   
   // Set iframe src
   iframe.src = url;
@@ -151,20 +137,13 @@ function showPayment(walletAddress, amount, apiKey, accessToken, accountId) {
   document.getElementById('cancel-payment-button').onclick = hidePayment;
 }
 
-// 2. Function to handle messages received from the iframe
+// Function to handle messages received from the iframe
 function handlePaymentMessage(event) {
-  // IMPORTANT: Verify origin for security to prevent cross-site scripting attacks
+  // IMPORTANT: Verify origin for security
   if (event.origin !== 'https://app-partner.phoenix.market') return;
   
-  // Handle Teller Connect success message
-  if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
-    const { accessToken, accountId } = event.data.data;
-    
-    // Store these credentials using your preferred storage method
-    console.log('Bank connected successfully');
-  }
   // Handle transaction success message
-  else if (event.data?.type === 'TRANSACTION_SUCCESS') {
+  if (event.data?.type === 'TRANSACTION_SUCCESS') {
     const { transactionHash } = event.data.data;
     console.log('Transaction successful:', transactionHash);
     
@@ -183,7 +162,7 @@ function handlePaymentMessage(event) {
   }
 }
 
-// 3. Function to hide the payment iframe
+// Function to hide the payment iframe
 function hidePayment() {
   document.getElementById('payment-container').style.display = 'none';
   // IMPORTANT: Remove event listener to prevent memory leaks
@@ -203,10 +182,6 @@ document.getElementById('start-payment').addEventListener('click', function() {
   const amount = document.getElementById('amount').value;
   const apiKey = 'YOUR_API_KEY'; // Replace with your API key
   
-  // Get optional stored tokens (if available)
-  const accessToken = localStorage.getItem('phoenix_access_token');
-  const accountId = localStorage.getItem('phoenix_account_id');
-  
   // Validate inputs (basic validation)
   if (!walletAddress || !amount) {
     alert('Please enter both wallet address and amount');
@@ -214,7 +189,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
   }
   
   // Start payment process with collected values
-  showPayment(walletAddress, amount, apiKey, accessToken, accountId);
+  showPayment(walletAddress, amount, apiKey);
 });
 ```
 
@@ -363,20 +338,12 @@ document.getElementById('start-payment').addEventListener('click', function() {
       
       <script>
         // Function to show payment iframe with parameters
-        function showPayment(walletAddress, amount, apiKey, accessToken, accountId) {
+        function showPayment(walletAddress, amount, apiKey) {
           const iframe = document.getElementById('phoenix-payment-iframe');
           const container = document.getElementById('payment-container');
           
           // Build iframe URL with all parameters
-          let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
-          
-          // Add optional parameters if provided
-          if (accessToken) {
-            url += `&accessToken=${accessToken}`;
-          }
-          if (accountId) {
-            url += `&accountId=${accountId}`;
-          }
+          const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
           
           // Set iframe src
           iframe.src = url;
@@ -396,18 +363,8 @@ document.getElementById('start-payment').addEventListener('click', function() {
           // IMPORTANT: Verify origin for security
           if (event.origin !== 'https://app-partner.phoenix.market') return;
           
-          // Handle Teller Connect success message
-          if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
-            const { accessToken, accountId } = event.data.data;
-            
-            // Store these credentials using your preferred storage method
-            localStorage.setItem('phoenix_access_token', accessToken);
-            localStorage.setItem('phoenix_account_id', accountId);
-            
-            console.log('Bank connected successfully');
-          }
           // Handle transaction success message
-          else if (event.data?.type === 'TRANSACTION_SUCCESS') {
+          if (event.data?.type === 'TRANSACTION_SUCCESS') {
             const { transactionHash } = event.data.data;
             console.log('Transaction successful:', transactionHash);
             
@@ -440,10 +397,6 @@ document.getElementById('start-payment').addEventListener('click', function() {
           const amount = document.getElementById('amount').value;
           const apiKey = 'YOUR_API_KEY'; // Replace with your API key
           
-          // Get optional stored tokens (if available)
-          const accessToken = localStorage.getItem('phoenix_access_token');
-          const accountId = localStorage.getItem('phoenix_account_id');
-          
           // Validate inputs
           if (!walletAddress || !amount) {
             alert('Please enter both wallet address and amount');
@@ -451,7 +404,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
           }
           
           // Start payment process with collected values
-          showPayment(walletAddress, amount, apiKey, accessToken, accountId);
+          showPayment(walletAddress, amount, apiKey);
         });
       </script>
     </body>

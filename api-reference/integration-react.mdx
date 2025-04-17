@@ -21,18 +21,12 @@ You can view the component code or download it directly:
       apiKey: string; // Your API key
       onClose: () => void;
       onComplete: (success: boolean, transactionId?: string, data?: any) => void;
-      
-      // Optional parameters
-      accessToken?: string; // Optional token for returning users
-      accountId?: string; // Optional account ID for returning users
     }
 
     export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
       walletAddress,
       amount,
       apiKey,
-      accessToken,
-      accountId,
       onClose,
       onComplete,
     }) => {
@@ -44,14 +38,8 @@ You can view the component code or download it directly:
           // Verify origin for security
           if (event.origin !== 'https://app-partner.phoenix.market') return;
           
-          // Handle Teller Connect success message
-          if (event.data?.type === 'TELLER_CONNECT_SUCCESS') {
-            const { accessToken, accountId } = event.data.data;
-            // You might want to store these values or pass them to the parent component
-            onComplete(true, undefined, { accessToken, accountId });
-          }
           // Handle transaction success message
-          else if (event.data?.type === 'TRANSACTION_SUCCESS') {
+          if (event.data?.type === 'TRANSACTION_SUCCESS') {
             const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
             onComplete(true, transactionHash, { 
               amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
@@ -69,17 +57,7 @@ You can view the component code or download it directly:
 
       // Build iframe URL with all parameters
       const getIframeUrl = () => {
-        let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
-        
-        // Add optional parameters if provided
-        if (accessToken) {
-          url += `&accessToken=${accessToken}`;
-        }
-        if (accountId) {
-          url += `&accountId=${accountId}`;
-        }
-        
-        return url;
+        return `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
       };
 
       return (
@@ -204,13 +182,9 @@ Before adding the component, you need to collect the following information:
 #### Required Parameters
 - `walletAddress`: The Ethereum wallet address where USDC will be sent
 - `amount`: The amount in USD to convert to USDC
-- `apiKey`: The 10 character alphanumeric API key
+- `apiKey`: Your API key
 - `onClose`: Function to handle when the user closes the payment modal
 - `onComplete`: Callback function to handle payment completion events
-
-#### Optional Parameters (for returning users)
-- `accessToken`: Access token obtained from a previous session
-- `accountId`: Account ID obtained from a previous session
 
 You should create form inputs in your UI to collect the required information:
 
@@ -221,10 +195,6 @@ You should create form inputs in your UI to collect the required information:
     const [walletAddress, setWalletAddress] = useState('');
     const [amount, setAmount] = useState('');
     const [apiKey] = useState('YOUR_API_KEY'); // Replace with your API key
-
-    // Optional: For returning users
-    const [accessToken, setAccessToken] = useState(localStorage.getItem('phoenix_access_token') || '');
-    const [accountId, setAccountId] = useState(localStorage.getItem('phoenix_account_id') || '');
     ```
   </Accordion>
 </AccordionGroup>
@@ -238,8 +208,6 @@ Once you have collected these values, you can pass them to the PhoenixPayment co
   walletAddress={walletAddress}
   amount={amount}
   apiKey={apiKey}
-  accessToken={accessToken} // Optional
-  accountId={accountId} // Optional
   onClose={() => setShowPayment(false)}
   onComplete={handlePaymentComplete}
 />
@@ -247,7 +215,10 @@ Once you have collected these values, you can pass them to the PhoenixPayment co
 
 ### Step 2.4: Handle Payment Completion
 
-The `onComplete` callback now receives additional data depending on the type of completion:
+The `onComplete` callback receives three parameters:
+1. `success`: Boolean indicating if the operation succeeded
+2. `transactionId`: Transaction hash (only for successful payments)
+3. `data`: Object containing additional information
 
 #### Transaction Success Data
 When a transaction is successful, the data object will contain:
@@ -262,18 +233,8 @@ When a transaction is successful, the data object will contain:
 ```tsx
 const handlePaymentComplete = (success, transactionId, data) => {
   if (success) {
-    // For Teller connection success
-    if (data?.accessToken && data?.accountId) {
-      console.log('Teller connection successful:', data);
-      
-      // Store tokens for future use if desired
-      localStorage.setItem('phoenix_access_token', data.accessToken);
-      localStorage.setItem('phoenix_account_id', data.accountId);
-      
-      // You might want to update your UI to show connected status
-    }
     // For transaction success
-    else if (data?.transactionHash) {
+    if (data?.transactionHash) {
       console.log('Transaction successful:', data);
       
       // You might want to redirect to a success page or show transaction details
@@ -305,39 +266,13 @@ const handlePaymentComplete = (success, transactionId, data) => {
       const [amount, setAmount] = useState('');
       const [showPayment, setShowPayment] = useState(false);
       
-      // Get stored credentials for returning users (if available)
-      const [accessToken, setAccessToken] = useState('');
-      const [accountId, setAccountId] = useState('');
-      
-      // Load stored credentials on component mount
-      useEffect(() => {
-        const storedToken = localStorage.getItem('phoenix_access_token');
-        const storedAccountId = localStorage.getItem('phoenix_account_id');
-        
-        if (storedToken) setAccessToken(storedToken);
-        if (storedAccountId) setAccountId(storedAccountId);
-      }, []);
-      
       const handlePaymentComplete = (success, transactionId, data) => {
         if (success) {
-          // For Teller connection success
-          if (data?.accessToken && data?.accountId) {
-            setAccessToken(data.accessToken);
-            setAccountId(data.accountId);
-            
-            // Store for future use
-            localStorage.setItem('phoenix_access_token', data.accessToken);
-            localStorage.setItem('phoenix_account_id', data.accountId);
-            
-            console.log('Bank account connected successfully');
-          }
           // For transaction success
-          else if (data?.transactionHash) {
-            console.log(`Transaction successful: ${data.transactionHash}`);
-            console.log(`Amount: $${data.amount} ${data.token} on ${data.chain}`);
-            console.log(`Transaction link: ${data.basescanLink}`);
+          if (data?.transactionHash) {
+            console.log('Transaction successful:', data);
             
-            // Show success message or redirect
+            // You might want to redirect to a success page or show transaction details
             
             // Uncomment the following line if you want to close the window after transaction success
             // setShowPayment(false);
@@ -383,8 +318,6 @@ const handlePaymentComplete = (success, transactionId, data) => {
               walletAddress={walletAddress}
               amount={amount}
               apiKey={apiKey}
-              accessToken={accessToken}
-              accountId={accountId}
               onClose={() => setShowPayment(false)}
               onComplete={handlePaymentComplete}
             />

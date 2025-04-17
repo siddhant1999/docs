@@ -48,33 +48,16 @@ window.addEventListener('message', function(event) {
   **Required parameters**: Both wallet address and amount must be provided
 </Check>
 
-<Check>
-  **Optional parameters**: Access token and account ID can be provided for returning users
-</Check>
-
 The Phoenix payment iframe requires the following parameters:
 
 ### Required Parameters
 1. **address**: A valid Ethereum wallet address
 2. **amount**: A valid USD amount (numeric value)
 
-### Optional Parameters
-1. **accessToken**: Access token from a previous successful Teller connection
-2. **accountId**: Account ID from a previous successful Teller connection
-
 ```javascript
-// Example URL with all parameters
+// Example URL with parameters
 const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
-
-// For returning users, add these parameters to enable faster checkout
-if (accessToken && accountId) {
-  url += `&accessToken=${accessToken}&accountId=${accountId}`;
-}
 ```
-
-<Tip>
-  Store the access token and account ID securely in your application's storage (e.g., localStorage) to enable a smoother experience for returning users.
-</Tip>
 
 ## Browser Requirements
 
@@ -105,12 +88,11 @@ https://app-partner.phoenix.market/
 
 Before going live, we recommend testing your integration with the following scenarios:
 
-1. **Bank connection flow**: Test the bank connection process and verify you receive the access token and account ID
+1. **Bank connection flow**: Test the bank connection process
 2. **Transaction flow**: Complete a payment from end to end with the transaction success message
-3. **Returning user flow**: Test using stored access token and account ID for a faster checkout experience
-4. **Parameter validation**: Test with invalid parameters to ensure proper error handling
-5. **Message handling**: Ensure proper handling of all message types
-6. **Security validation**: Verify message origin validation
+3. **Parameter validation**: Test with invalid parameters to ensure proper error handling
+4. **Message handling**: Ensure proper handling of all message types
+5. **Security validation**: Verify message origin validation
 
 ## Support
 

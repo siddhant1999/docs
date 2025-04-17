@@ -30,8 +30,6 @@ You can view the component code or download it directly:
       walletAddress: string;
       amount: string;
       apiKey: string; // Your API key
-      accessToken?: string; // Optional token for returning users
-      accountId?: string; // Optional account ID for returning users
       onClose: () => void;
       onComplete: (success: boolean, transactionId?: string, data?: any) => void;
     }
@@ -40,41 +38,18 @@ You can view the component code or download it directly:
       walletAddress,
       amount,
       apiKey,
-      accessToken,
-      accountId,
       onClose,
       onComplete,
     }) => {
       const webViewRef = useRef<WebView>(null);
-
-      // Build WebView URL with all parameters
-      const getWebViewUrl = () => {
-        let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
-        
-        // Add optional parameters if provided
-        if (accessToken) {
-          url += `&accessToken=${accessToken}`;
-        }
-        if (accountId) {
-          url += `&accountId=${accountId}`;
-        }
-        
-        return url;
-      };
 
       // Handle messages from WebView
       const handleWebViewMessage = (event: any) => {
         try {
           const data = JSON.parse(event.nativeEvent.data);
           
-          // Handle Teller Connect success message
-          if (data?.type === 'TELLER_CONNECT_SUCCESS') {
-            const { accessToken, accountId } = data.data;
-            // You might want to store these values or pass them to the parent component
-            onComplete(true, undefined, { accessToken, accountId });
-          }
           // Handle transaction success message
-          else if (data?.type === 'TRANSACTION_SUCCESS') {
+          if (data?.type === 'TRANSACTION_SUCCESS') {
             const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = data.data;
             onComplete(true, transactionHash, { 
               amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
@@ -83,6 +58,11 @@ You can view the component code or download it directly:
         } catch (error) {
           console.error('Error parsing WebView message:', error);
         }
+      };
+
+      // Build WebView URL with all parameters
+      const getWebViewUrl = () => {
+        return `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
       };
 
       // Inject JavaScript to listen for postMessage events and forward them to React Native
@@ -215,10 +195,6 @@ Before adding the component, you need to collect the following information:
 - `onClose`: Function to handle when the user closes the payment modal
 - `onComplete`: Callback function to handle payment completion events
 
-#### Optional Parameters (for returning users)
-- `accessToken`: Access token obtained from a previous session
-- `accountId`: Account ID obtained from a previous session
-
 You should create form inputs in your UI to collect the required information:
 
 <AccordionGroup>
@@ -228,10 +204,6 @@ You should create form inputs in your UI to collect the required information:
     const [walletAddress, setWalletAddress] = useState('');
     const [amount, setAmount] = useState('');
     const [showPayment, setShowPayment] = useState(false);
-
-    // Optional: For returning users
-    const [accessToken, setAccessToken] = useState('');
-    const [accountId, setAccountId] = useState('');
     ```
   </Accordion>
 </AccordionGroup>
@@ -245,8 +217,6 @@ Once you have collected these values, you can pass them to the PhoenixPaymentNat
   walletAddress={walletAddress}
   amount={amount}
   apiKey="YOUR_API_KEY"  // Replace with your API key
-  accessToken={accessToken}  // Optional
-  accountId={accountId}      // Optional
   onClose={() => setShowPayment(false)}
   onComplete={handlePaymentComplete}
 />
@@ -272,14 +242,8 @@ When a transaction is successful, the data object will contain:
 ```tsx
 const handlePaymentComplete = (success, transactionId, data) => {
   if (success) {
-    // Case 1: Bank connected successfully
-    if (data?.accessToken && data?.accountId) {
-      // Store these credentials using your preferred storage method
-      console.log('Bank account connected successfully');
-      // You might want to store the tokens for future use
-    }
-    // Case 2: Transaction completed successfully
-    else if (data?.transactionHash) {
+    // For transaction success
+    if (data?.transactionHash) {
       console.log('Transaction completed:', data.transactionHash);
       
       // Uncomment the following line if you want to close the window after transaction success
@@ -342,14 +306,8 @@ Add to your `AndroidManifest.xml`:
       
       const handlePaymentComplete = (success, transactionId, data) => {
         if (success) {
-          // Case 1: Bank connected successfully
-          if (data?.accessToken && data?.accountId) {
-            // Store these credentials using your preferred storage method
-            console.log('Bank account connected successfully');
-            // You might want to store the tokens for future use
-          }
-          // Case 2: Transaction completed successfully
-          else if (data?.transactionHash) {
+          // For transaction success
+          if (data?.transactionHash) {
             console.log('Transaction completed:', data.transactionHash);
             
             // Uncomment the following line if you want to close the window after transaction success
@@ -392,8 +350,6 @@ Add to your `AndroidManifest.xml`:
               walletAddress={walletAddress}
               amount={amount}
               apiKey="YOUR_API_KEY"  // Replace with your API key
-              accessToken={accessToken}  // Optional
-              accountId={accountId}      // Optional
               onClose={() => setShowPayment(false)}
               onComplete={handlePaymentComplete}
             />
