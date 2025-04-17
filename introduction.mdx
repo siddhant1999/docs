@@ -53,17 +53,17 @@ Phoenix Market does not hold or transmit fiat at any point in time. Phoenix main
 ## Key Benefits for Your Business
 
 <CardGroup cols={2}>
-  <Card title="Expanded Services" icon="puzzle-piece">
-    Offer crypto access to your clients without complex exchange integrations
+  <Card title="Instant On & Off-Ramp" icon="puzzle-piece">
+    Offer crypto access to your complex without complex exchange integrations
   </Card>
   <Card title="Regulatory Compliance" icon="shield-check">
     Orders executed through proper banking channels with appropriate compliance measures
   </Card>
-  <Card title="Risk Mitigation" icon="lock">
-    Structured settlement process with verification steps
+  <Card title="Accessibility" icon="users-rays">
+    Over 80% of Americans have access to [Zelle](https://www.zellepay.com/get-started)
   </Card>
-  <Card title="Revenue Generation" icon="chart-line">
-    New revenue stream through crypto on-ramping fees
+  <Card title="Increased Revenue" icon="chart-line">
+    Increase the volume of transactions to your product
   </Card>
   <Card title="Customer Retention" icon="users">
     Meet growing demand for crypto services within your existing platform
@@ -94,7 +94,7 @@ Phoenix supports two payment flows to accommodate different user scenarios:
     </div>
 
     <Warning className="mt-4">
-      <strong>Limitations:</strong> Teller (our banking integration provider) does not currently handle Multi-Factor Authentication (MFA) with Zelle. While Zelle rarely forces MFA, new users or those engaging in suspicious activity may be required to complete MFA. In these cases, users will be directed to the Manual Zelle Payment flow.
+      <strong>Limitations:</strong> Teller (our banking integration provider) does not currently handle Multi-Factor Authentication (MFA) with Zelle. While Zelle rarely forces MFA, new users or those flagged as suspicious may be required to complete MFA. In these cases, users will be directed to the Manual Zelle Payment flow.
     </Warning>
   </Tab>
   
@@ -105,7 +105,7 @@ Phoenix supports two payment flows to accommodate different user scenarios:
         <p>For users without supported banks or those who encounter MFA issues, we offer a manual payment option. Users will:</p>
         
         <ol className="list-decimal pl-5 mt-2 space-y-1">
-          <li>Open their banking app or Zelle app</li>
+          <li>Open their banking app</li>
           <li>Make the Zelle payment manually to the provided recipient</li>
           <li>Return to Phoenix where we verify the payment</li>
           <li>Once verified, USDC is automatically released from escrow</li>
@@ -118,7 +118,7 @@ Phoenix supports two payment flows to accommodate different user scenarios:
     </Info>
 
     <Note className="mt-4">
-      For security and transaction verification, we add a unique random number of cents (between \$0.00 and \$0.20) to each transaction amount. This helps us match and verify your specific payment among all incoming Zelle transactions.
+      For security and transaction verification, we add a unique random number of cents (between \$0.00 and \$0.20) to each transaction amount. The user will receive these addition cents in USDC. This is not a fee.
     </Note>
   </Tab>
 </Tabs>
