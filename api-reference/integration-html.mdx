@@ -101,6 +101,7 @@ You need to add JavaScript functions to handle the integration. Here's a breakdo
 #### Required Parameters
 - `walletAddress`: The Ethereum wallet address where USDC will be sent
 - `amount`: The amount in USD to convert to USDC
+- `apiKey`: Your API key
 - `onClose`: Function to handle when the user closes the payment modal
 - `handlePaymentMessage`: Function to process payment response messages
 
@@ -113,12 +114,12 @@ You need to add JavaScript functions to handle the integration. Here's a breakdo
 ```javascript
 // 1. Function to show payment iframe with parameters
 // This function takes the wallet address, amount, and optional parameters, sets up the iframe, and displays it
-function showPayment(walletAddress, amount, accessToken, accountId) {
+function showPayment(walletAddress, amount, apiKey, accessToken, accountId) {
   const iframe = document.getElementById('phoenix-payment-iframe');
   const container = document.getElementById('payment-container');
   
   // Build iframe URL with all parameters
-  let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+  let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
   
   // Add optional parameters if provided
   if (accessToken) {
@@ -197,6 +198,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
   // Get values from form inputs
   const walletAddress = document.getElementById('wallet').value;
   const amount = document.getElementById('amount').value;
+  const apiKey = 'YOUR_API_KEY'; // Replace with your API key
   
   // Get optional stored tokens (if available)
   const accessToken = localStorage.getItem('phoenix_access_token');
@@ -209,7 +211,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
   }
   
   // Start payment process with collected values
-  showPayment(walletAddress, amount, accessToken, accountId);
+  showPayment(walletAddress, amount, apiKey, accessToken, accountId);
 });
 ```
 
@@ -356,12 +358,12 @@ Here's a complete example showing how to implement the Phoenix payment in an HTM
   
   <script>
     // Function to show payment iframe with parameters
-    function showPayment(walletAddress, amount, accessToken, accountId) {
+    function showPayment(walletAddress, amount, apiKey, accessToken, accountId) {
       const iframe = document.getElementById('phoenix-payment-iframe');
       const container = document.getElementById('payment-container');
       
       // Build iframe URL with all parameters
-      let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+      let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
       
       // Add optional parameters if provided
       if (accessToken) {
@@ -434,6 +436,7 @@ Here's a complete example showing how to implement the Phoenix payment in an HTM
       // Get values from form inputs
       const walletAddress = document.getElementById('wallet').value;
       const amount = document.getElementById('amount').value;
+      const apiKey = 'YOUR_API_KEY'; // Replace with your API key
       
       // Get optional stored tokens (if available)
       const accessToken = localStorage.getItem('phoenix_access_token');
@@ -446,7 +449,7 @@ Here's a complete example showing how to implement the Phoenix payment in an HTM
       }
       
       // Start payment process with collected values
-      showPayment(walletAddress, amount, accessToken, accountId);
+      showPayment(walletAddress, amount, apiKey, accessToken, accountId);
     });
   </script>
 </body>
