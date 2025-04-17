@@ -17,6 +17,7 @@ interface PhoenixPaymentProps {
   // Required parameters
   walletAddress: string;
   amount: string;
+  apiKey: string; // Your API key
   onClose: () => void;
   onComplete: (success: boolean, transactionId?: string, data?: any) => void;
   
@@ -28,6 +29,7 @@ interface PhoenixPaymentProps {
 export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
   walletAddress,
   amount,
+  apiKey,
   accessToken,
   accountId,
   onClose,
@@ -66,7 +68,7 @@ export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
 
   // Build iframe URL with all parameters
   const getIframeUrl = () => {
-    let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+    let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
     
     // Add optional parameters if provided
     if (accessToken) {
@@ -190,6 +192,7 @@ Before adding the component, you need to collect the following information:
 #### Required Parameters
 - `walletAddress`: The Ethereum wallet address where USDC will be sent
 - `amount`: The amount in USD to convert to USDC
+- `apiKey`: The 10 character alphanumeric API key
 - `onClose`: Function to handle when the user closes the payment modal
 - `onComplete`: Callback function to handle payment completion events
 
@@ -203,6 +206,7 @@ You should create form inputs in your UI to collect the required information:
 // Example of collecting user input
 const [walletAddress, setWalletAddress] = useState('');
 const [amount, setAmount] = useState('');
+const [apiKey] = useState('YOUR_API_KEY'); // Replace with your API key
 
 // Optional: For returning users
 const [accessToken, setAccessToken] = useState(localStorage.getItem('phoenix_access_token') || '');
@@ -217,6 +221,7 @@ Once you have collected these values, you can pass them to the PhoenixPayment co
 <PhoenixPayment 
   walletAddress={walletAddress}
   amount={amount}
+  apiKey={apiKey}
   accessToken={accessToken} // Optional
   accountId={accountId} // Optional
   onClose={() => setShowPayment(false)}
@@ -279,6 +284,7 @@ import { PhoenixPayment } from './components/PhoenixPayment';
 function PaymentPage() {
   const [walletAddress, setWalletAddress] = useState('');
   const [amount, setAmount] = useState('');
+  const [apiKey] = useState('YOUR_API_KEY'); // Replace with your API key
   const [showPayment, setShowPayment] = useState(false);
   
   // Get stored credentials for returning users (if available)
@@ -358,6 +364,7 @@ function PaymentPage() {
         <PhoenixPayment 
           walletAddress={walletAddress}
           amount={amount}
+          apiKey={apiKey}
           accessToken={accessToken}
           accountId={accountId}
           onClose={() => setShowPayment(false)}

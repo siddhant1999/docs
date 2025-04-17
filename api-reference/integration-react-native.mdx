@@ -29,6 +29,7 @@ import { WebView } from 'react-native-webview';
 interface PhoenixPaymentProps {
   walletAddress: string;
   amount: string;
+  apiKey: string; // Your API key
   accessToken?: string; // Optional token for returning users
   accountId?: string; // Optional account ID for returning users
   onClose: () => void;
@@ -38,6 +39,7 @@ interface PhoenixPaymentProps {
 export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
   walletAddress,
   amount,
+  apiKey,
   accessToken,
   accountId,
   onClose,
@@ -47,7 +49,7 @@ export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
 
   // Build WebView URL with all parameters
   const getWebViewUrl = () => {
-    let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+    let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
     
     // Add optional parameters if provided
     if (accessToken) {
@@ -184,6 +186,7 @@ To use the PhoenixPayment component, you'll need to provide the following props:
 #### Required Props
 - `walletAddress`: The Ethereum wallet address where USDC will be sent
 - `amount`: The amount in USD to convert to USDC
+- `apiKey`: Required 10 character alphanumeric API key
 - `onClose`: Function to call when the user closes the payment modal
 - `onComplete`: Callback function that receives the payment result
 
@@ -198,6 +201,7 @@ To use the PhoenixPayment component, you'll need to provide the following props:
   <PhoenixPayment
     walletAddress={walletAddress}
     amount={amount}
+    apiKey="YOUR_API_KEY"  // Replace with your API key
     accessToken={accessToken}  // Optional
     accountId={accountId}      // Optional
     onClose={() => setShowPayment(false)}
