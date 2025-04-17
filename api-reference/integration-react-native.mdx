@@ -233,11 +233,16 @@ const handlePaymentComplete = (success, transactionId, data) => {
       // - transactionHash: The blockchain transaction hash
       // - basescanLink: Link to view the transaction
       console.log('Transaction completed:', data.transactionHash);
+      
+      // Uncomment the following line if you want to close the window after transaction success
+      // setShowPayment(false);
     }
+  } else {
+    console.log('Payment failed or cancelled');
+    
+    // Uncomment the following line if you want to close the window after payment failure/cancellation
+    // setShowPayment(false);
   }
-  
-  // Close the payment modal
-  setShowPayment(false);
 };
 ```
 

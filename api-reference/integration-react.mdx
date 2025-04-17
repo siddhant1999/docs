@@ -255,12 +255,16 @@ const handlePaymentComplete = (success, transactionId, data) => {
       // - basescanLink: Link to view the transaction on Basescan
       
       // You might want to redirect to a success page or show transaction details
+      
+      // Uncomment the following line if you want to close the window after transaction success
+      // setShowPayment(false);
     }
   } else {
     console.log('Payment failed or cancelled');
+    
+    // Uncomment the following line if you want to close the window after payment failure/cancellation
+    // setShowPayment(false);
   }
-  
-  setShowPayment(false);
 };
 ```
 
@@ -310,12 +314,16 @@ function PaymentPage() {
         console.log(`Transaction link: ${data.basescanLink}`);
         
         // Show success message or redirect
+        
+        // Uncomment the following line if you want to close the window after transaction success
+        // setShowPayment(false);
       }
     } else {
       console.log('Payment failed or cancelled');
+      
+      // Uncomment the following line if you want to close the window after payment failure/cancellation
+      // setShowPayment(false);
     }
-    
-    setShowPayment(false);
   };
   
   return (

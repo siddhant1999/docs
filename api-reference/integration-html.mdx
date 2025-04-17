@@ -154,9 +154,6 @@ function handlePaymentMessage(event) {
     
     // Store these credentials using your preferred storage method
     console.log('Bank connected successfully:', accessToken, accountId);
-    
-    // You might want to update your UI to show the bank is connected
-    hidePayment();
   }
   // Handle transaction success message
   else if (event.data?.type === 'TRANSACTION_SUCCESS') {
@@ -168,7 +165,16 @@ function handlePaymentMessage(event) {
     
     // You should store transaction details in your database
     // and update your UI to show the payment was successful
-    hidePayment();
+    
+    // Uncomment the following line if you want to close the window after transaction success
+    // hidePayment();
+  }
+  // Handle payment failure or cancellation
+  else if (event.data?.type === 'PAYMENT_FAILED' || event.data?.type === 'PAYMENT_CANCELLED') {
+    console.log('Payment failed or cancelled');
+    
+    // Uncomment the following line if you want to close the window after payment failure/cancellation
+    // hidePayment();
   }
 }
 
@@ -392,9 +398,6 @@ Here's a complete example showing how to implement the Phoenix payment in an HTM
         localStorage.setItem('phoenix_account_id', accountId);
         
         console.log('Bank connected successfully');
-        
-        // You might want to update your UI to show the bank is connected
-        hidePayment();
       }
       // Handle transaction success message
       else if (event.data?.type === 'TRANSACTION_SUCCESS') {
@@ -406,7 +409,16 @@ Here's a complete example showing how to implement the Phoenix payment in an HTM
         
         // You should store transaction details in your database
         // and update your UI to show the payment was successful
-        hidePayment();
+        
+        // Uncomment the following line if you want to close the window after transaction success
+        // hidePayment();
+      }
+      // Handle payment failure or cancellation
+      else if (event.data?.type === 'PAYMENT_FAILED' || event.data?.type === 'PAYMENT_CANCELLED') {
+        console.log('Payment failed or cancelled');
+        
+        // Uncomment the following line if you want to close the window after payment failure/cancellation
+        // hidePayment();
       }
     }
     
