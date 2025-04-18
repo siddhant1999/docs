@@ -26,6 +26,12 @@ The Phoenix payment iframe will send messages to your application to indicate th
   }
 }
 ```
+
+```javascript Cancel
+{
+  type: 'CANCEL'
+}
+```
 </CodeGroup>
 
 ### Handling Messages
@@ -46,6 +52,13 @@ window.addEventListener('message', function(event) {
     console.log(`Transaction link: ${basescanLink}`);
     
     // Update your UI or redirect user to a success page
+  }
+  // Handle cancel message
+  else if (event.data?.type === 'CANCEL') {
+    console.log('Payment canceled by user');
+    
+    // Close the iframe or update UI accordingly
+    // Example: document.getElementById('phoenix-iframe').style.display = 'none';
   }
 });
 ```

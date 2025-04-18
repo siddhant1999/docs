@@ -153,6 +153,11 @@ function handlePaymentMessage(event) {
     // Uncomment the following line if you want to close the window after transaction success
     // hidePayment();
   }
+  // Handle cancel message
+  else if (event.data?.type === 'CANCEL') {
+    console.log('Payment canceled by user');
+    hidePayment();
+  }
   // Handle payment failure or cancellation
   else if (event.data?.type === 'PAYMENT_FAILED' || event.data?.type === 'PAYMENT_CANCELLED') {
     console.log('Payment failed or cancelled');
@@ -373,6 +378,11 @@ document.getElementById('start-payment').addEventListener('click', function() {
             
             // Uncomment the following line if you want to close the window after transaction success
             // hidePayment();
+          }
+          // Handle cancel message
+          else if (event.data?.type === 'CANCEL') {
+            console.log('Payment canceled by user');
+            hidePayment();
           }
           // Handle payment failure or cancellation
           else if (event.data?.type === 'PAYMENT_FAILED' || event.data?.type === 'PAYMENT_CANCELLED') {
