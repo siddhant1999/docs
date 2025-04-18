@@ -55,6 +55,11 @@ You can view the component code or download it directly:
               amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
             });
           }
+          // Handle cancel message
+          else if (data?.type === 'CANCEL') {
+            console.log('Payment canceled by user');
+            onClose();
+          }
         } catch (error) {
           console.error('Error parsing WebView message:', error);
         }
