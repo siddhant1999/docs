@@ -89,15 +89,13 @@ You can view the component code or download it directly:
         >
           <View style={styles.container}>
             <View style={styles.paymentModal}>
-              <View style={styles.header}>
-                <TouchableOpacity 
-                  style={styles.closeButton} 
-                  onPress={onClose}
-                  accessibilityLabel="Close payment window"
-                >
-                  <Text style={styles.closeButtonText}>✕</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity 
+                style={styles.closeButton} 
+                onPress={onClose}
+                accessibilityLabel="Close payment window"
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
               <WebView
                 ref={webViewRef}
                 source={{ uri: getWebViewUrl() }}
@@ -110,6 +108,7 @@ You can view the component code or download it directly:
                 incognito={false}
                 thirdPartyCookiesEnabled={true}
                 allowsInlineMediaPlayback={true}
+                androidLayerType="hardware"
               />
             </View>
           </View>
@@ -125,39 +124,61 @@ You can view the component code or download it directly:
         alignItems: 'center',
       },
       paymentModal: {
-        backgroundColor: 'white',
+        backgroundColor: 'transparent',
         borderRadius: 10,
-        width: '90%',
-        height: '80%',
-        overflow: 'hidden',
+        width: 350,
+        height: 600,
+        overflow: 'visible',
+        position: 'relative',
+        ...Platform.select({
+          ios: {
+            shadowColor: 'transparent',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0,
+            shadowRadius: 0,
+          },
+          android: {
+            elevation: 0,
+          },
+        }),
+      },
+      closeButton: {
+        position: 'absolute',
+        top: -15,
+        right: -15,
+        zIndex: 10,
+        backgroundColor: '#333',
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 0,
         ...Platform.select({
           ios: {
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.25,
-            shadowRadius: 3.84,
+            shadowRadius: 4,
           },
           android: {
-            elevation: 5,
+            elevation: 4,
           },
         }),
       },
-      header: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
-      },
-      closeButton: {
-        padding: 5,
-      },
       closeButtonText: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
+        color: 'white',
+        lineHeight: 18,
+        textAlign: 'center',
       },
       webView: {
         flex: 1,
+        borderRadius: 8,
+        overflow: 'hidden',
+        backgroundColor: 'transparent',
+        opacity: 0.99, // Fix for black borders on Android
       },
     });
 

@@ -109,10 +109,11 @@ You can view the component code or download it directly:
             
             .payment-modal {
               position: relative;
-              background-color: white;
+              background-color: transparent;
               border-radius: 12px;
-              padding: 20px;
-              box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+              padding: 0;
+              overflow: visible;
+              box-shadow: none;
             }
             
             .close-button {
@@ -130,7 +131,10 @@ You can view the component code or download it directly:
               display: flex;
               align-items: center;
               justify-content: center;
-              z-index: 1;
+              z-index: 10;
+              padding: 0;
+              line-height: 1;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             }
             
             .teller-iframe {
@@ -138,6 +142,7 @@ You can view the component code or download it directly:
               height: 600px;
               border: none;
               border-radius: 8px;
+              overflow: hidden;
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             }
           `}</style>

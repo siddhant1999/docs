@@ -59,10 +59,11 @@ Add this CSS to style the payment container and iframe:
 
 .payment-modal {
   position: relative;
-  background-color: white;
+  background-color: transparent;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .close-button {
@@ -80,7 +81,10 @@ Add this CSS to style the payment container and iframe:
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: 10;
+  padding: 0;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .teller-iframe {
@@ -88,6 +92,7 @@ Add this CSS to style the payment container and iframe:
   height: 600px;
   border: none;
   border-radius: 8px;
+  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 ```
@@ -271,10 +276,11 @@ document.getElementById('start-payment').addEventListener('click', function() {
         
         .payment-modal {
           position: relative;
-          background-color: white;
+          background-color: transparent;
           border-radius: 12px;
-          padding: 20px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+          padding: 0;
+          box-shadow: none;
+          overflow: visible;
         }
         
         .close-button {
@@ -292,7 +298,10 @@ document.getElementById('start-payment').addEventListener('click', function() {
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 1;
+          z-index: 10;
+          padding: 0;
+          line-height: 1;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         .teller-iframe {
@@ -300,6 +309,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
           height: 600px;
           border: none;
           border-radius: 8px;
+          overflow: hidden;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
       </style>
