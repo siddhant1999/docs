@@ -91,12 +91,16 @@ Phoenix supports two payment flows to accommodate different user scenarios:
             <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Capital One</span>
             <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Citi</span>
           </div>
+          
+          <Warning className="mt-2">
+            If you attempt to select an unsupported bank (i.e., one without Zelle functionality), the payment will fail. You must select a supported bank with Zelle functionality to use this feature.
+          </Warning>
         </div>
       </div>
     </div>
 
     <Warning className="mt-4">
-      <strong>Limitations:</strong> Teller (our banking integration provider) does not currently handle Multi-Factor Authentication (MFA) with Zelle. While Zelle rarely forces MFA, new users or those flagged as suspicious may be required to complete MFA. In these cases, users will be directed to the Manual Zelle Payment flow.
+      Teller (our banking integration provider) does not currently handle Multi-Factor Authentication (MFA) with Zelle. While Zelle rarely forces MFA, new users or those flagged as suspicious may be required to complete MFA. In these cases, users will be directed to the Manual Zelle Payment flow.
     </Warning>
 
     ### Security & Data Protection

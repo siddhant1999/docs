@@ -21,6 +21,7 @@ You can view the component code or download it directly:
       apiKey: string; // Your API key
       onClose: () => void;
       onComplete: (success: boolean, transactionId?: string, data?: any) => void;
+      onDone?: () => void; // New callback for handling done events
     }
 
     export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
@@ -29,6 +30,7 @@ You can view the component code or download it directly:
       apiKey,
       onClose,
       onComplete,
+      onDone,
     }) => {
       const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -50,6 +52,25 @@ You can view the component code or download it directly:
             console.log('Payment canceled by user');
             onClose();
           }
+          // Handle open explorer URL message
+          else if (event.data?.type === 'OPEN_EXPLORER_URL') {
+            const url = event.data.url;
+            console.log('Opening explorer URL:', url);
+            
+            // Always open in a new tab
+            window.open(url, '_blank');
+          }
+          // Handle done message
+          else if (event.data?.type === 'USER_DONE') {
+            console.log('Payment process completed');
+            
+            if (onDone) {
+              onDone();
+            } else {
+              // Default behavior: close the window
+              onClose();
+            }
+          }
         };
 
         window.addEventListener('message', handleMessage);
@@ -58,7 +79,7 @@ You can view the component code or download it directly:
         return () => {
           window.removeEventListener('message', handleMessage);
         };
-      }, [onComplete]);
+      }, [onComplete, onClose, onDone]);
 
       // Build iframe URL with all parameters
       const getIframeUrl = () => {
@@ -167,8 +188,7 @@ You can view the component code or download it directly:
 
 Save this file to your project's component directory, for example:
 
-```
-/src/components/PhoenixPayment.tsx
+```/src/components/PhoenixPayment.tsx
 ```
 
 <Info>
@@ -196,6 +216,9 @@ Before adding the component, you need to collect the following information:
 - `onClose`: Function to handle when the user closes the payment modal
 - `onComplete`: Callback function to handle payment completion events
 
+#### Optional Parameters
+- `onDone`: Callback function to handle when the payment process is complete
+
 You should create form inputs in your UI to collect the required information:
 
 <AccordionGroup>
@@ -220,6 +243,7 @@ Once you have collected these values, you can pass them to the PhoenixPayment co
   apiKey={apiKey}
   onClose={() => setShowPayment(false)}
   onComplete={handlePaymentComplete}
+  onDone={handlePaymentDone}
 />
 ```
 
@@ -261,6 +285,15 @@ const handlePaymentComplete = (success, transactionId, data) => {
 };
 ```
 
+### Step 2.5: Handle Done Events
+
+```tsx
+const handlePaymentDone = () => {
+  // Close the payment window
+  setShowPayment(false);
+};
+```
+
 ## Full Implementation Example
 
 <AccordionGroup>
@@ -293,6 +326,11 @@ const handlePaymentComplete = (success, transactionId, data) => {
           // Uncomment the following line if you want to close the window after payment failure/cancellation
           // setShowPayment(false);
         }
+      };
+      
+      const handlePaymentDone = () => {
+        // Close the payment window
+        setShowPayment(false);
       };
       
       return (
@@ -330,6 +368,7 @@ const handlePaymentComplete = (success, transactionId, data) => {
               apiKey={apiKey}
               onClose={() => setShowPayment(false)}
               onComplete={handlePaymentComplete}
+              onDone={handlePaymentDone}
             />
           )}
         </>

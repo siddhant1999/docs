@@ -23,7 +23,7 @@ You can view the component code or download it directly:
   <Accordion title="View Component Code">
     ```tsx PhoenixPaymentNative.tsx
     import React, { useRef, useEffect } from 'react';
-    import { View, StyleSheet, TouchableOpacity, Text, Modal, Platform } from 'react-native';
+    import { View, StyleSheet, TouchableOpacity, Text, Modal, Platform, Linking } from 'react-native';
     import { WebView } from 'react-native-webview';
 
     interface PhoenixPaymentNativeProps {
@@ -32,6 +32,7 @@ You can view the component code or download it directly:
       apiKey: string; // Your API key
       onClose: () => void;
       onComplete: (success: boolean, transactionId?: string, data?: any) => void;
+      onDone?: () => void; // New callback for handling done events
     }
 
     export const PhoenixPaymentNative: React.FC<PhoenixPaymentNativeProps> = ({
@@ -40,6 +41,7 @@ You can view the component code or download it directly:
       apiKey,
       onClose,
       onComplete,
+      onDone,
     }) => {
       const webViewRef = useRef<WebView>(null);
 
@@ -59,6 +61,31 @@ You can view the component code or download it directly:
           else if (data?.type === 'CANCEL') {
             console.log('Payment canceled by user');
             onClose();
+          }
+          // Handle open explorer URL message
+          else if (data?.type === 'OPEN_EXPLORER_URL') {
+            const url = data.url;
+            console.log('Opening explorer URL:', url);
+            
+            // Always open in browser using Linking
+            Linking.canOpenURL(url).then(supported => {
+              if (supported) {
+                Linking.openURL(url);
+              } else {
+                console.log("Don't know how to open URI: " + url);
+              }
+            });
+          }
+          // Handle done message
+          else if (data?.type === 'USER_DONE') {
+            console.log('Payment process completed');
+            
+            if (onDone) {
+              onDone();
+            } else {
+              // Default behavior: close the window
+              onClose();
+            }
           }
         } catch (error) {
           console.error('Error parsing WebView message:', error);
@@ -221,6 +248,9 @@ Before adding the component, you need to collect the following information:
 - `onClose`: Function to handle when the user closes the payment modal
 - `onComplete`: Callback function to handle payment completion events
 
+#### Optional Parameters
+- `onDone`: Callback function to handle when the payment process is complete
+
 You should create form inputs in your UI to collect the required information:
 
 <AccordionGroup>
@@ -245,6 +275,7 @@ Once you have collected these values, you can pass them to the PhoenixPaymentNat
   apiKey="YOUR_API_KEY"  // Replace with your API key
   onClose={() => setShowPayment(false)}
   onComplete={handlePaymentComplete}
+  onDone={handlePaymentDone}
 />
 ```
 
@@ -281,6 +312,15 @@ const handlePaymentComplete = (success, transactionId, data) => {
     // Uncomment the following line if you want to close the window after payment failure/cancellation
     // setShowPayment(false);
   }
+};
+```
+
+### Step 3.5: Handle Done Events
+
+```tsx
+const handlePaymentDone = () => {
+  // Close the payment window
+  setShowPayment(false);
 };
 ```
 
@@ -322,7 +362,7 @@ Add to your `AndroidManifest.xml`:
 
     ```tsx
     import React, { useState } from 'react';
-    import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+    import { View, Text, TextInput, Button, StyleSheet, Linking } from 'react-native';
     import { PhoenixPaymentNative } from './components/PhoenixPaymentNative';
 
     export default function PaymentScreen() {
@@ -345,6 +385,11 @@ Add to your `AndroidManifest.xml`:
           // Uncomment the following line if you want to close the window after payment failure/cancellation
           // setShowPayment(false);
         }
+      };
+      
+      const handlePaymentDone = () => {
+        // Close the payment window
+        setShowPayment(false);
       };
 
       return (
@@ -378,6 +423,7 @@ Add to your `AndroidManifest.xml`:
               apiKey="YOUR_API_KEY"  // Replace with your API key
               onClose={() => setShowPayment(false)}
               onComplete={handlePaymentComplete}
+              onDone={handlePaymentDone}
             />
           )}
         </View>

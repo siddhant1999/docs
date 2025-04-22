@@ -32,6 +32,21 @@ The Phoenix payment iframe will send messages to your application to indicate th
   type: 'CANCEL'
 }
 ```
+
+```javascript Open Explorer URL
+{
+  type: 'OPEN_EXPLORER_URL',
+  data: {
+    url: 'https://basescan.org/tx/0x123abc...' // URL to open in a new tab/window
+  }
+}
+```
+
+```javascript Done
+{
+  type: 'USER_DONE'
+}
+```
 </CodeGroup>
 
 ### Handling Messages
@@ -58,6 +73,22 @@ window.addEventListener('message', function(event) {
     console.log('Payment canceled by user');
     
     // Close the iframe or update UI accordingly
+    // Example: document.getElementById('phoenix-iframe').style.display = 'none';
+  }
+  // Handle open explorer URL message
+  else if (event.data?.type === 'OPEN_EXPLORER_URL') {
+    const url = event.data.url;
+    
+    console.log('Opening explorer URL:', url);
+    
+    // Open the URL in a new tab
+    window.open(url, '_blank');
+  }
+  // Handle done message
+  else if (event.data?.type === 'USER_DONE') {
+    console.log('Payment process completed');
+    
+    // Close the iframe or update UI accordingly, similar to CANCEL
     // Example: document.getElementById('phoenix-iframe').style.display = 'none';
   }
 });

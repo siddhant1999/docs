@@ -107,6 +107,7 @@ You need to add JavaScript functions to handle the integration. Here's a breakdo
 - `apiKey`: Your API key
 - `onClose`: Function to handle when the user closes the payment modal
 - `handlePaymentMessage`: Function to process payment response messages
+- `onDone`: Function to handle when the payment process is complete (new)
 
 ### Core Functions
 
@@ -149,7 +150,7 @@ function handlePaymentMessage(event) {
   
   // Handle transaction success message
   if (event.data?.type === 'TRANSACTION_SUCCESS') {
-    const { transactionHash } = event.data.data;
+    const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
     console.log('Transaction successful:', transactionHash);
     
     // You should store transaction details in your database
@@ -161,6 +162,19 @@ function handlePaymentMessage(event) {
   // Handle cancel message
   else if (event.data?.type === 'CANCEL') {
     console.log('Payment canceled by user');
+    hidePayment();
+  }
+  // Handle open explorer URL message
+  else if (event.data?.type === 'OPEN_EXPLORER_URL') {
+    const url = event.data.url;
+    console.log('Opening explorer URL:', url);
+    
+    // Open the URL in a new tab
+    window.open(url, '_blank');
+  }
+  // Handle done message
+  else if (event.data?.type === 'USER_DONE') {
+    console.log('Payment process completed');
     hidePayment();
   }
   // Handle payment failure or cancellation
@@ -380,7 +394,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
           
           // Handle transaction success message
           if (event.data?.type === 'TRANSACTION_SUCCESS') {
-            const { transactionHash } = event.data.data;
+            const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
             console.log('Transaction successful:', transactionHash);
             
             // You should store transaction details in your database
@@ -392,6 +406,19 @@ document.getElementById('start-payment').addEventListener('click', function() {
           // Handle cancel message
           else if (event.data?.type === 'CANCEL') {
             console.log('Payment canceled by user');
+            hidePayment();
+          }
+          // Handle open explorer URL message
+          else if (event.data?.type === 'OPEN_EXPLORER_URL') {
+            const url = event.data.url;
+            console.log('Opening explorer URL:', url);
+            
+            // Open the URL in a new tab
+            window.open(url, '_blank');
+          }
+          // Handle done message
+          else if (event.data?.type === 'USER_DONE') {
+            console.log('Payment process completed');
             hidePayment();
           }
           // Handle payment failure or cancellation
