@@ -5,7 +5,35 @@ description: 'Learn how to integrate Phoenix using vanilla HTML and JavaScript'
 
 For non-React frameworks or custom implementations, follow this HTML integration guide.
 
-## Step 1: Add the iframe to your HTML
+## Step 1: Obtain Access Token
+
+<AccordionGroup>
+  <Accordion title="Obtaining Access Token">
+    Before integrating Phoenix, you need to obtain an access token from your backend.
+    
+    ```javascript
+    // Example function to fetch access token from your backend
+    async function getAccessToken() {
+      try {
+        const response = await fetch('/api/token');
+        const data = await response.json();
+        return data.access_token;
+      } catch (error) {
+        console.error('Error fetching access token:', error);
+        return null;
+      }
+    }
+    ```
+    
+    See the [Obtaining Access Token](/api-reference/access-token) page for detailed instructions on setting up the backend endpoint.
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  This is example code for obtaining an access token. You will need to adapt the endpoint URL and request format based on your specific backend implementation. Refer to the [Obtaining Access Token](/api-reference/access-token) page for a complete example of setting up a backend service.
+</Note>
+
+## Step 2: Add the iframe to your HTML
 
 ```html
 <div id="payment-container" style="display: none;">
@@ -30,7 +58,7 @@ For non-React frameworks or custom implementations, follow this HTML integration
 </div>
 ```
 
-## Step 2: Add Essential CSS
+## Step 3: Add Essential CSS
 
 Add this CSS to style the payment container and iframe:
 
@@ -97,14 +125,14 @@ Add this CSS to style the payment container and iframe:
 }
 ```
 
-## Step 3: Add JavaScript for Communication
+## Step 4: Add JavaScript for Communication
 
 You need to add JavaScript functions to handle the integration. Here's a breakdown of the required parameters and functions:
 
 ### Required Parameters
 - `walletAddress`: The Ethereum wallet address where USDC will be sent
 - `amount`: The amount in USD to convert to USDC
-- `apiKey`: Your API key
+- `accessToken`: The access token from your backend
 - `onClose`: Function to handle when the user closes the payment modal
 - `handlePaymentMessage`: Function to process payment response messages
 - `onDone`: Function to handle when the payment process is complete (new)
@@ -122,13 +150,33 @@ When a transaction is successful, the data object will contain:
 - `basescanLink`: Link to view the transaction on Basescan
 
 ```javascript
+// Function to get access token from your backend
+async function getAccessToken() {
+  try {
+    const response = await fetch('/api/token');
+    const data = await response.json();
+    return data.access_token;
+  } catch (error) {
+    console.error('Error fetching access token:', error);
+    return null;
+  }
+}
+
 // Function to show payment iframe with parameters
-function showPayment(walletAddress, amount, apiKey) {
+async function showPayment(walletAddress, amount) {
   const iframe = document.getElementById('phoenix-payment-iframe');
   const container = document.getElementById('payment-container');
   
+  // Get the access token from your backend
+  const accessToken = await getAccessToken();
+  
+  if (!accessToken) {
+    alert('Unable to obtain access token. Please try again later.');
+    return;
+  }
+  
   // Build iframe URL with all parameters
-  const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
+  const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
   
   // Set iframe src
   iframe.src = url;
@@ -204,7 +252,6 @@ document.getElementById('start-payment').addEventListener('click', function() {
   // Get values from form inputs
   const walletAddress = document.getElementById('wallet').value;
   const amount = document.getElementById('amount').value;
-  const apiKey = 'YOUR_API_KEY'; // Replace with your API key
   
   // Validate inputs (basic validation)
   if (!walletAddress || !amount) {
@@ -213,7 +260,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
   }
   
   // Start payment process with collected values
-  showPayment(walletAddress, amount, apiKey);
+  showPayment(walletAddress, amount);
 });
 ```
 
@@ -263,6 +310,11 @@ document.getElementById('start-payment').addEventListener('click', function() {
           padding: 10px 15px;
           border-radius: 4px;
           cursor: pointer;
+        }
+        
+        button:disabled {
+          background-color: #ccc;
+          cursor: not-allowed;
         }
         
         /* Phoenix Payment Styles */
@@ -366,13 +418,33 @@ document.getElementById('start-payment').addEventListener('click', function() {
       </div>
       
       <script>
+        // Function to get access token from your backend
+        async function getAccessToken() {
+          try {
+            const response = await fetch('/api/token');
+            const data = await response.json();
+            return data.access_token;
+          } catch (error) {
+            console.error('Error fetching access token:', error);
+            return null;
+          }
+        }
+        
         // Function to show payment iframe with parameters
-        function showPayment(walletAddress, amount, apiKey) {
+        async function showPayment(walletAddress, amount) {
           const iframe = document.getElementById('phoenix-payment-iframe');
           const container = document.getElementById('payment-container');
           
+          // Get the access token from your backend
+          const accessToken = await getAccessToken();
+          
+          if (!accessToken) {
+            alert('Unable to obtain access token. Please try again later.');
+            return;
+          }
+          
           // Build iframe URL with all parameters
-          const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
+          const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
           
           // Set iframe src
           iframe.src = url;
@@ -442,7 +514,6 @@ document.getElementById('start-payment').addEventListener('click', function() {
           // Get values from form inputs
           const walletAddress = document.getElementById('wallet').value;
           const amount = document.getElementById('amount').value;
-          const apiKey = 'YOUR_API_KEY'; // Replace with your API key
           
           // Validate inputs
           if (!walletAddress || !amount) {
@@ -451,7 +522,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
           }
           
           // Start payment process with collected values
-          showPayment(walletAddress, amount, apiKey);
+          showPayment(walletAddress, amount);
         });
       </script>
     </body>

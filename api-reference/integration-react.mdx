@@ -5,7 +5,34 @@ description: 'Learn how to integrate Phoenix using our pre-built React component
 
 Follow these steps to integrate using our pre-built React component.
 
-## Step 1: Download the Component
+## Step 1: Obtain Access Token
+
+<AccordionGroup>
+  <Accordion title="Obtaining Access Token">
+    Before using the Phoenix component, you need to obtain an access token from your backend.
+    
+    ```tsx
+    // Example of fetching the access token from your backend
+    const [accessToken, setAccessToken] = useState('');
+    
+    useEffect(() => {
+      // Replace with your actual backend endpoint that implements the token generation
+      fetch('/api/token')
+        .then(response => response.json())
+        .then(data => setAccessToken(data.access_token))
+        .catch(error => console.error('Error fetching access token:', error));
+    }, []);
+    ```
+    
+    See the [Obtaining Access Token](/api-reference/access-token) page for detailed instructions on setting up the backend endpoint.
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  This is example code for obtaining an access token. You will need to adapt the endpoint URL and request format based on your specific backend implementation. Refer to the [Obtaining Access Token](/api-reference/access-token) page for a complete example of setting up a backend service.
+</Note>
+
+## Step 2: Download the Component
 
 You can view the component code or download it directly:
 
@@ -18,7 +45,7 @@ You can view the component code or download it directly:
       // Required parameters
       walletAddress: string;
       amount: string;
-      apiKey: string; // Your API key
+      accessToken: string; // Access token from your backend
       onClose: () => void;
       onComplete: (success: boolean, transactionId?: string, data?: any) => void;
       onDone?: () => void; // New callback for handling done events
@@ -27,7 +54,7 @@ You can view the component code or download it directly:
     export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
       walletAddress,
       amount,
-      apiKey,
+      accessToken,
       onClose,
       onComplete,
       onDone,
@@ -83,7 +110,7 @@ You can view the component code or download it directly:
 
       // Build iframe URL with all parameters
       const getIframeUrl = () => {
-        return `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&apiKey=${apiKey}`;
+        return `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
       };
 
       return (
@@ -187,32 +214,30 @@ You can view the component code or download it directly:
 </div>
 
 Save this file to your project's component directory, for example:
-
-```/src/components/PhoenixPayment.tsx
-```
+```/src/components/PhoenixPayment.tsx```
 
 <Info>
   The component includes all necessary styling internally via the `<style>` tag, so you don't need to add any additional CSS.
 </Info>
 
-## Step 2: Implement the Component
+## Step 3: Implement the Component
 
 Follow these steps to implement the component in your application:
 
-### Step 2.1: Import the Component
+### Step 3.1: Import the Component
 
 ```tsx
 import { PhoenixPayment } from './components/PhoenixPayment';
 ```
 
-### Step 2.2: Prepare Required and Optional Parameters
+### Step 3.2: Prepare Required and Optional Parameters
 
 Before adding the component, you need to collect the following information:
 
 #### Required Parameters
 - `walletAddress`: The Ethereum wallet address where USDC will be sent
 - `amount`: The amount in USD to convert to USDC
-- `apiKey`: Your API key
+- `accessToken`: The access token retrieved from your backend
 - `onClose`: Function to handle when the user closes the payment modal
 - `onComplete`: Callback function to handle payment completion events
 
@@ -227,12 +252,20 @@ You should create form inputs in your UI to collect the required information:
     // Example of collecting user input
     const [walletAddress, setWalletAddress] = useState('');
     const [amount, setAmount] = useState('');
-    const [apiKey] = useState('YOUR_API_KEY'); // Replace with your API key
+    const [accessToken, setAccessToken] = useState('');
+    
+    useEffect(() => {
+      // Fetch the access token from your backend
+      fetch('/api/token')
+        .then(response => response.json())
+        .then(data => setAccessToken(data.access_token))
+        .catch(error => console.error('Error fetching access token:', error));
+    }, []);
     ```
   </Accordion>
 </AccordionGroup>
 
-### Step 2.3: Add the Component to Your JSX
+### Step 3.3: Add the Component to Your JSX
 
 Once you have collected these values, you can pass them to the PhoenixPayment component:
 
@@ -240,14 +273,14 @@ Once you have collected these values, you can pass them to the PhoenixPayment co
 <PhoenixPayment 
   walletAddress={walletAddress}
   amount={amount}
-  apiKey={apiKey}
+  accessToken={accessToken}
   onClose={() => setShowPayment(false)}
   onComplete={handlePaymentComplete}
   onDone={handlePaymentDone}
 />
 ```
 
-### Step 2.4: Handle Payment Completion
+### Step 3.4: Handle Payment Completion
 
 The `onComplete` callback receives three parameters:
 1. `success`: Boolean indicating if the operation succeeded
@@ -285,7 +318,7 @@ const handlePaymentComplete = (success, transactionId, data) => {
 };
 ```
 
-### Step 2.5: Handle Done Events
+### Step 3.5: Handle Done Events
 
 ```tsx
 const handlePaymentDone = () => {
@@ -308,6 +341,15 @@ const handlePaymentDone = () => {
       const [walletAddress, setWalletAddress] = useState('');
       const [amount, setAmount] = useState('');
       const [showPayment, setShowPayment] = useState(false);
+      const [accessToken, setAccessToken] = useState('');
+      
+      useEffect(() => {
+        // Fetch the access token from your backend
+        fetch('/api/token')
+          .then(response => response.json())
+          .then(data => setAccessToken(data.access_token))
+          .catch(error => console.error('Error fetching access token:', error));
+      }, []);
       
       const handlePaymentComplete = (success, transactionId, data) => {
         if (success) {
@@ -357,15 +399,18 @@ const handlePaymentDone = () => {
             />
           </div>
           
-          <button onClick={() => setShowPayment(true)}>
+          <button 
+            onClick={() => setShowPayment(true)} 
+            disabled={!accessToken} // Disable if access token isn't loaded
+          >
             Make Payment
           </button>
           
-          {showPayment && (
+          {showPayment && accessToken && (
             <PhoenixPayment 
               walletAddress={walletAddress}
               amount={amount}
-              apiKey={apiKey}
+              accessToken={accessToken}
               onClose={() => setShowPayment(false)}
               onComplete={handlePaymentComplete}
               onDone={handlePaymentDone}

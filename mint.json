@@ -17,6 +17,7 @@
       "group": "Phoenix Payment",
       "pages": [
         "api-reference/overview",
+        "api-reference/access-token",
         "api-reference/integration-react",
         "api-reference/integration-react-native",
         "api-reference/integration-html",
