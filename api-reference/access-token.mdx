@@ -65,6 +65,10 @@ https://api.phoenix.market/oauth/token
 
 ## Important Security Considerations
 
+<Note>
+  The access token does not need to be generated on a per-user basis. You can use the same access token across all your users. A recommended practice is to set up a cron job that runs every hour to refresh your access_token and store it on your backend for all your users to share.
+</Note>
+
 1. **Store credentials securely**: Your `client_id` and `client_secret` should never be exposed in frontend code.
 
 2. **Token lifespan**: Access tokens are valid for 1 hour (3600 seconds). Set up a cron job on your backend to refresh the token hourly.
