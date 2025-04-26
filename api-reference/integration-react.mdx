@@ -49,6 +49,7 @@ You can view the component code or download it directly:
       onClose: () => void;
       onComplete: (success: boolean, transactionId?: string, data?: any) => void;
       onDone?: () => void; // New callback for handling done events
+      theme?: 'light' | 'dark'; // Optional theme parameter
     }
 
     export const PhoenixPayment: React.FC<PhoenixPaymentProps> = ({
@@ -58,6 +59,7 @@ You can view the component code or download it directly:
       onClose,
       onComplete,
       onDone,
+      theme,
     }) => {
       const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -110,7 +112,11 @@ You can view the component code or download it directly:
 
       // Build iframe URL with all parameters
       const getIframeUrl = () => {
-        return `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
+        let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
+        if (theme) {
+          url += `&theme=${theme}`;
+        }
+        return url;
       };
 
       return (
@@ -243,6 +249,7 @@ Before adding the component, you need to collect the following information:
 
 #### Optional Parameters
 - `onDone`: Callback function to handle when the payment process is complete
+- `theme`: Optional UI theme, can be set to either 'light' or 'dark'
 
 You should create form inputs in your UI to collect the required information:
 
@@ -277,6 +284,7 @@ Once you have collected these values, you can pass them to the PhoenixPayment co
   onClose={() => setShowPayment(false)}
   onComplete={handlePaymentComplete}
   onDone={handlePaymentDone}
+  theme="dark" // Optional: specify 'light' or 'dark' theme
 />
 ```
 
@@ -414,6 +422,7 @@ const handlePaymentDone = () => {
               onClose={() => setShowPayment(false)}
               onComplete={handlePaymentComplete}
               onDone={handlePaymentDone}
+              theme="dark" // Optional: specify 'light' or 'dark' theme
             />
           )}
         </>

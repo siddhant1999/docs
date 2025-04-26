@@ -163,7 +163,7 @@ async function getAccessToken() {
 }
 
 // Function to show payment iframe with parameters
-async function showPayment(walletAddress, amount) {
+async function showPayment(walletAddress, amount, theme) {
   const iframe = document.getElementById('phoenix-payment-iframe');
   const container = document.getElementById('payment-container');
   
@@ -176,7 +176,10 @@ async function showPayment(walletAddress, amount) {
   }
   
   // Build iframe URL with all parameters
-  const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
+  let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
+  if (theme) {
+    url += `&theme=${theme}`;
+  }
   
   // Set iframe src
   iframe.src = url;
@@ -252,6 +255,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
   // Get values from form inputs
   const walletAddress = document.getElementById('wallet').value;
   const amount = document.getElementById('amount').value;
+  const theme = document.getElementById('theme').value; // Get selected theme
   
   // Validate inputs (basic validation)
   if (!walletAddress || !amount) {
@@ -260,7 +264,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
   }
   
   // Start payment process with collected values
-  showPayment(walletAddress, amount);
+  showPayment(walletAddress, amount, theme);
 });
 ```
 
@@ -392,6 +396,16 @@ document.getElementById('start-payment').addEventListener('click', function() {
         <label for="amount">Amount (USD):</label>
         <input id="amount" type="number" placeholder="100">
       </div>
+
+      <!-- Add this new input group -->
+      <div class="input-group">
+        <label for="theme">Theme:</label>
+        <select id="theme">
+          <option value="">Default</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
       
       <button id="start-payment">Make Payment</button>
       
@@ -431,7 +445,7 @@ document.getElementById('start-payment').addEventListener('click', function() {
         }
         
         // Function to show payment iframe with parameters
-        async function showPayment(walletAddress, amount) {
+        async function showPayment(walletAddress, amount, theme) {
           const iframe = document.getElementById('phoenix-payment-iframe');
           const container = document.getElementById('payment-container');
           
@@ -444,7 +458,10 @@ document.getElementById('start-payment').addEventListener('click', function() {
           }
           
           // Build iframe URL with all parameters
-          const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
+          let url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}`;
+          if (theme) {
+            url += `&theme=${theme}`;
+          }
           
           // Set iframe src
           iframe.src = url;
@@ -514,15 +531,16 @@ document.getElementById('start-payment').addEventListener('click', function() {
           // Get values from form inputs
           const walletAddress = document.getElementById('wallet').value;
           const amount = document.getElementById('amount').value;
+          const theme = document.getElementById('theme').value; // Get selected theme
           
-          // Validate inputs
+          // Validate inputs (basic validation)
           if (!walletAddress || !amount) {
             alert('Please enter both wallet address and amount');
             return;
           }
           
           // Start payment process with collected values
-          showPayment(walletAddress, amount);
+          showPayment(walletAddress, amount, theme);
         });
       </script>
     </body>
