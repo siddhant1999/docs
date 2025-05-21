@@ -49,6 +49,7 @@ You can view the component code or download it directly:
       onClose: () => void;
       onComplete: (success: boolean, transactionId?: string, data?: any) => void;
       onDone?: () => void; // New callback for handling done events
+      onOrderCreated?: (data: any) => void; // Callback for handling order creation
       theme?: 'light' | 'dark'; // Optional theme parameter
     }
 
@@ -59,6 +60,7 @@ You can view the component code or download it directly:
       onClose,
       onComplete,
       onDone,
+      onOrderCreated,
       theme,
     }) => {
       const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -75,6 +77,15 @@ You can view the component code or download it directly:
             onComplete(true, transactionHash, { 
               amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink 
             });
+          }
+          // Handle order created message
+          else if (event.data?.type === 'ORDER_CREATED') {
+            const { order_id, ...data } = event.data.data;
+            console.log('Order created:', event.data.data);
+            
+            if (onOrderCreated) {
+              onOrderCreated({ order_id, data });
+            }
           }
           // Handle cancel message
           else if (event.data?.type === 'CANCEL') {
@@ -108,7 +119,7 @@ You can view the component code or download it directly:
         return () => {
           window.removeEventListener('message', handleMessage);
         };
-      }, [onComplete, onClose, onDone]);
+      }, [onComplete, onClose, onDone, onOrderCreated]);
 
       // Build iframe URL with all parameters
       const getIframeUrl = () => {
@@ -249,6 +260,7 @@ Before adding the component, you need to collect the following information:
 
 #### Optional Parameters
 - `onDone`: Callback function to handle when the payment process is complete
+- `onOrderCreated`: Optional callback function to handle when an order is created
 - `theme`: Optional UI theme, can be set to either 'light' or 'dark'
 
 You should create form inputs in your UI to collect the required information:
@@ -284,11 +296,34 @@ Once you have collected these values, you can pass them to the PhoenixPayment co
   onClose={() => setShowPayment(false)}
   onComplete={handlePaymentComplete}
   onDone={handlePaymentDone}
+  onOrderCreated={handleOrderCreated} // Optional: handle order creation to receive order details
   theme="dark" // Optional: specify 'light' or 'dark' theme
 />
 ```
 
-### Step 3.4: Handle Payment Completion
+### Step 3.4: Handle Order Created Events
+
+The `onOrderCreated` callback is triggered when a new order is created in the Phoenix system. This happens before the payment process begins. The callback receives an object containing:
+
+- `order_id`: Unique identifier for the order
+- `data`: Object containing additional order details:
+  - `created_at`: Timestamp of order creation
+  - `buyer_address`: The buyer's wallet address
+  - `seller_address`: The seller's wallet address
+  - `send_amount`: The amount to be sent
+  - `receive_amount`: The amount to be received
+  - `uniqueness_amount`: The amount of cents added to the order for uniqueness
+  - `receiving_chain_id`: The chain ID where the payment will be received
+  - `zelle_address`: The Zelle address for payment
+
+```tsx
+const handleOrderCreated = ({ order_id, data }) => {
+  console.log('Order created:', { order_id, data });
+  // You can store the order details for reference
+};
+```
+
+### Step 3.5: Handle Payment Completion
 
 The `onComplete` callback receives three parameters:
 1. `success`: Boolean indicating if the operation succeeded
@@ -326,7 +361,7 @@ const handlePaymentComplete = (success, transactionId, data) => {
 };
 ```
 
-### Step 3.5: Handle Done Events
+### Step 3.6: Handle Done Events
 
 ```tsx
 const handlePaymentDone = () => {
@@ -383,6 +418,11 @@ const handlePaymentDone = () => {
         setShowPayment(false);
       };
       
+      const handleOrderCreated = ({ order_id, data }) => {
+        console.log('Order created:', { order_id, data });
+        // You can store the order details for reference
+      };
+      
       return (
         <>
           {/* Form to collect wallet address and amount */}
@@ -422,6 +462,7 @@ const handlePaymentDone = () => {
               onClose={() => setShowPayment(false)}
               onComplete={handlePaymentComplete}
               onDone={handlePaymentDone}
+              onOrderCreated={handleOrderCreated}
               theme="dark" // Optional: specify 'light' or 'dark' theme
             />
           )}
