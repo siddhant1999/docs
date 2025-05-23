@@ -149,6 +149,19 @@ When a transaction is successful, the data object will contain:
 - `transactionHash`: The blockchain transaction hash
 - `basescanLink`: Link to view the transaction on Basescan
 
+#### Order Created Data
+When an order is created, the data object will contain:
+- `order_id`: Unique identifier for the order
+- `data`: Object containing additional order details:
+  - `created_at`: Timestamp of order creation
+  - `buyer_address`: The buyer's wallet address
+  - `seller_address`: The seller's wallet address
+  - `send_amount`: The amount to be sent
+  - `receive_amount`: The amount to be received
+  - `uniqueness_amount`: The amount of cents added to the order for uniqueness
+  - `receiving_chain_id`: The chain ID where the payment will be received
+  - `zelle_address`: The Zelle address for payment
+
 ```javascript
 // Function to get access token from your backend
 async function getAccessToken() {
@@ -199,8 +212,16 @@ function handlePaymentMessage(event) {
   // IMPORTANT: Verify origin for security
   if (event.origin !== 'https://app-partner.phoenix.market') return;
   
+  // Handle order created message
+  if (event.data?.type === 'ORDER_CREATED') {
+    const { order_id, ...data } = event.data.data;
+    console.log('Order created:', event.data.data);
+    
+    // Handle the order creation event as needed
+    // You should store order details in your database, especially the order_id
+  }
   // Handle transaction success message
-  if (event.data?.type === 'TRANSACTION_SUCCESS') {
+  else if (event.data?.type === 'TRANSACTION_SUCCESS') {
     const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
     console.log('Transaction successful:', transactionHash);
     
@@ -481,8 +502,16 @@ document.getElementById('start-payment').addEventListener('click', function() {
           // IMPORTANT: Verify origin for security
           if (event.origin !== 'https://app-partner.phoenix.market') return;
           
+          // Handle order created message
+          if (event.data?.type === 'ORDER_CREATED') {
+            const { order_id, ...data } = event.data.data;
+            console.log('Order created:', event.data.data);
+            
+            // Handle the order creation event as needed
+            // You should store order details in your database, especially the order_id
+          }
           // Handle transaction success message
-          if (event.data?.type === 'TRANSACTION_SUCCESS') {
+          else if (event.data?.type === 'TRANSACTION_SUCCESS') {
             const { amount, token, chain, walletAddress, sendAmount, transactionHash, basescanLink } = event.data.data;
             console.log('Transaction successful:', transactionHash);
             

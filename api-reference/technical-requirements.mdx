@@ -54,9 +54,12 @@ The Phoenix payment iframe requires the following parameters:
 1. **address**: A valid Ethereum wallet address
 2. **amount**: A valid USD amount (numeric value)
 
+### Optional Parameters
+1. **theme**: The UI theme to use. Can be either 'light' or 'dark'
+
 ```javascript
 // Example URL with parameters
-const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}`;
+const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&theme=${theme}`;
 ```
 
 ## Browser Requirements
@@ -90,9 +93,10 @@ Before going live, we recommend testing your integration with the following scen
 
 1. **Bank connection flow**: Test the bank connection process
 2. **Transaction flow**: Complete a payment from end to end with the transaction success message
-3. **Parameter validation**: Test with invalid parameters to ensure proper error handling
-4. **Message handling**: Ensure proper handling of all message types
-5. **Security validation**: Verify message origin validation
+3. **Order tracking**: Verify that order details are properly captured for record-keeping
+4. **Parameter validation**: Test with invalid parameters to ensure proper error handling
+5. **Message handling**: Ensure proper handling of all message types
+6. **Security validation**: Verify message origin validation
 
 ## Support
 
