@@ -23,6 +23,15 @@ Before signing up as a seller, ensure you have:
 - A bank account that can connect with Teller
 - A referral code (we provide special codes for integration partners)
 
+<Note>
+  **Special Referral Codes Required**
+  
+  To create a private seller network, you'll need a special integrator referral code. You can request this by:
+  - Emailing us at main@phoenix.market
+  - Including your company name, intended use case, and expected monthly transaction volume
+  - We'll respond within 1 business day with your referral code and additional integration support
+</Note>
+
 ### Step-by-Step Seller Registration
 
 <Steps>
@@ -46,6 +55,12 @@ Before signing up as a seller, ensure you have:
   </Step>
 </Steps>
 
+![Complete Profile Setup](/images/Complete%20Profile.png)
+
+<Note>
+  The profile page allows sellers to configure their Zelle ID and connect their bank account through Teller for receiving USD payments.
+</Note>
+
 ## Pool Configuration
 
 Once registered as a seller, you can customize your pool settings on the dashboard:
@@ -54,7 +69,13 @@ Once registered as a seller, you can customize your pool settings on the dashboa
 - **Price/Spread**: Set your desired markup above the market rate
 - **Minimum Transaction**: Smallest order size you're willing to accept
 - **Maximum Transaction**: Largest order size you can fulfill
-- **Liquidity Amount**: Total USDC you have available for trading
+- **USDC Management**: Deposit USDC from your crypto wallet directly into your seller pool, or request withdrawals at any time
+
+![Seller Pool Settings](/images/Seller%20Pool%20Settings.png)
+
+<Note>
+  The seller dashboard allows you to configure your pool settings, deposit USDC funds, and request withdrawals at any time.
+</Note>
 
 ### Profit Model
 Sellers profit by charging a spread on their USDC pool. For example:
@@ -87,13 +108,13 @@ All sellers are automatically added to Phoenix Market's order book. When a buyer
 
 Integrators can create private networks of sellers specifically for their users, ensuring better control over liquidity and user experience.
 
-### Step 1: Generate Referral Links
-1. Visit the profile page of the seller dashboard
-2. Copy your unique referral link
-3. Share this link with potential sellers you want to onboard
+### Step 1: Get Your Referral Code
+1. Contact us to receive a special integrator referral code
+2. Distribute this referral code to sellers you want to onboard
+3. Any seller who signs up using your referral code will be automatically associated with your integration
 
 <Note>
-  Any seller who signs up using your referral link will be automatically associated with your integration.
+  We provide special referral codes for integration partners. Any seller who signs up using your referral code will be automatically associated with your integration.
 </Note>
 
 ### Step 2: Configure Seller Privacy
@@ -118,9 +139,15 @@ const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount
 
 For complete privacy between your sellers and buyers:
 
-1. **Seller Configuration**: Sellers must set their status to "privately listed" on the dashboard
+1. **Seller Configuration**: Sellers must set their listing status to "Private" on the dashboard
 2. **Iframe Parameter**: Pass `onlyPrivateMatching=true` in the iframe URL parameters
 3. **Access Token**: Your access token differentiates your users from other integrators
+
+![Private Listing Configuration](/images/Private%20Listing.png)
+
+<Note>
+  Sellers can toggle their listing status to "Private" from the seller dashboard to ensure they only match with your users.
+</Note>
 
 <Warning>
   Both conditions must be met for private matching. If either is missing, your buyers may be matched with public sellers as well.
