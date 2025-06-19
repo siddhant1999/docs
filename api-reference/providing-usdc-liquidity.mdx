@@ -1,0 +1,179 @@
+---
+title: 'Providing USDC Liquidity'
+description: 'Learn how integrators can ensure sufficient USDC liquidity for their users by becoming sellers or onboarding other sellers'
+---
+
+<Info>
+  The best way for integrators to guarantee sufficient USDC liquidity for their onramp users is to provide that USDC themselves as sellers on Phoenix Market, or by onboarding other sellers that can provide sufficient liquidity to match the buy volume they plan on bringing to our market.
+</Info>
+
+## Overview
+
+Phoenix Market operates as a peer-to-peer marketplace where users can swap between USD and USDC. As an integrator, ensuring your users have access to sufficient USDC liquidity is crucial for a smooth experience. This guide explains how you can become a seller or onboard other sellers to provide the necessary liquidity for your users.
+
+## Becoming a Seller on Phoenix Market
+
+### Prerequisites
+
+Before signing up as a seller, ensure you have:
+
+- A Web3 wallet (MetaMask, WalletConnect, etc.)
+- USDC on the Base network
+- A Zelle account for receiving USD payments
+- A bank account that can connect with Teller
+- A referral code (we provide special codes for integration partners)
+
+### Step-by-Step Seller Registration
+
+<Steps>
+  <Step title="Get Referral Code">
+    Contact us to receive a special referral code for integration partners
+  </Step>
+  <Step title="Access Seller Dashboard">
+    Visit [https://trade.phoenix.market/invite](https://trade.phoenix.market/invite) and enter your referral code
+  </Step>
+  <Step title="Connect Wallet">
+    Connect your crypto wallet to the seller dashboard
+  </Step>
+  <Step title="Setup Zelle ID">
+    Configure your Zelle ID on the profile page for receiving USD payments
+  </Step>
+  <Step title="Connect Bank">
+    Sign into your bank account using Teller on the profile page
+  </Step>
+  <Step title="Configure Pool Settings">
+    Set your desired price/spread, minimum transaction amount, and maximum transaction amount on the dashboard
+  </Step>
+</Steps>
+
+## Pool Configuration
+
+Once registered as a seller, you can customize your pool settings on the dashboard:
+
+### Key Settings
+- **Price/Spread**: Set your desired markup above the market rate
+- **Minimum Transaction**: Smallest order size you're willing to accept
+- **Maximum Transaction**: Largest order size you can fulfill
+- **Liquidity Amount**: Total USDC you have available for trading
+
+### Profit Model
+Sellers profit by charging a spread on their USDC pool. For example:
+- Market rate: 1 USDC = $1.00
+- Your spread: 1 USDC = $1.02 (2% markup)
+- Profit per transaction: 2% of the transaction value
+
+<Note>
+  As an integrator, you have full control over the spread charged to your users only when you bring all your own liquidity. This means either becoming a seller yourself or onboarding your own sellers. You must also set up exclusivity between your buyers and sellers through the steps described in the "Creating an Exclusive Seller Network" section. Without exclusive networks, your users will be matched with public sellers who set their own spreads.
+</Note>
+
+## How Our Matching Engine Works
+
+### Order Book System
+All sellers are automatically added to Phoenix Market's order book. When a buyer creates an order:
+
+1. **Order Creation**: Buyer specifies amount and wallet address
+2. **Order Book Query**: Matching engine searches for compatible sellers
+3. **Seller Filtering**: Only publicly listed sellers with sufficient liquidity are considered
+4. **Price Selection**: Engine selects the seller with the lowest price/spread
+5. **Tie Breaking**: If multiple sellers have the same spread, selection is random
+
+### Matching Criteria
+- **Sufficient Liquidity**: Seller must have enough USDC to fulfill the order
+- **Public Listing**: Seller must be publicly visible in the order book
+- **Price Competitiveness**: Lower spreads get priority
+- **Transaction Limits**: Order must fall within seller's min/max limits
+
+## Creating an Exclusive Seller Network
+
+Integrators can create exclusive networks of sellers specifically for their users, ensuring better control over liquidity and user experience.
+
+### Step 1: Generate Referral Links
+1. Visit the profile page of the seller dashboard
+2. Copy your unique referral link
+3. Share this link with potential sellers you want to onboard
+
+<Note>
+  Any seller who signs up using your referral link will be automatically associated with your integration.
+</Note>
+
+### Step 2: Configure Seller Exclusivity
+Sellers in your network can control their matching preferences from the seller dashboard:
+
+- **Exclusivity Toggle ON**: Seller only matches with your users/buyers
+- **Exclusivity Toggle OFF**: Seller matches with both your users and public buy orders
+
+### Step 3: Enable Private Matching
+Add the `onlyPrivateMatching=true` parameter to your iframe URL:
+
+```javascript
+// Example iframe URL with private matching enabled
+const url = `https://app-partner.phoenix.market/?address=${walletAddress}&amount=${amount}&access_token=${accessToken}&onlyPrivateMatching=true`;
+```
+
+<Note>
+  When using private matching, if your seller network runs out of liquidity, your buyers' orders will automatically fall back to public sellers on our market. However, we cannot guarantee competitive pricing in this scenario since public sellers set their own spreads independently.
+</Note>
+
+### Exclusive Network Requirements
+
+For complete exclusivity between your sellers and buyers:
+
+1. **Seller Configuration**: Sellers must set their status to "exclusively listed" on the dashboard
+2. **Iframe Parameter**: Pass `onlyPrivateMatching=true` in the iframe URL parameters
+3. **Access Token**: Your access token differentiates your users from other integrators
+
+<Warning>
+  Both conditions must be met for exclusive matching. If either is missing, your buyers may be matched with public sellers as well.
+</Warning>
+
+## Benefits of Exclusive Networks
+
+<CardGroup cols={2}>
+  <Card title="Guaranteed Liquidity" icon="shield-check">
+    Ensure your users always have access to USDC when they need it
+  </Card>
+  <Card title="Better User Experience" icon="user-check">
+    Faster transactions and more reliable service for your users
+  </Card>
+  <Card title="Revenue Sharing" icon="chart-line">
+    Earn from the spreads charged by sellers in your network
+  </Card>
+  <Card title="Quality Control" icon="star">
+    Onboard trusted sellers who meet your quality standards
+  </Card>
+  <Card title="Competitive Pricing" icon="dollar-sign">
+    Control pricing through your network of sellers
+  </Card>
+  <Card title="Brand Protection" icon="lock">
+    Maintain your brand reputation through trusted seller relationships
+  </Card>
+</CardGroup>
+
+## Planning Your Liquidity Strategy
+
+### Initial Setup
+- **Volume Assessment**: Estimate your expected buy volume and peak demand periods
+- **Seller Recruitment**: Onboard enough sellers to cover your projected volume with a buffer
+- **Pricing Strategy**: Work with sellers to set competitive spreads that are acceptable for your users
+
+### Ongoing Management
+- **Monitor Liquidity**: Track USDC levels across your seller network
+- **Seller Communication**: Ensure sellers refill their liquidity pools when they run low
+- **Performance Tracking**: Monitor transaction success rates and seller bank reliability
+
+<Note>
+  Liquidity management is ongoing. Regular communication with your sellers about maintaining their USDC pools is crucial for reliable service.
+</Note>
+
+## Support and Resources
+
+For assistance with seller onboarding and exclusive networks:
+
+- **Referral Codes**: Contact us for special integration partner codes
+- **Technical Support**: Get help with dashboard setup and configuration
+- **Seller Onboarding**: Assistance with recruiting and managing sellers
+- **Integration Support**: Help with iframe parameters and testing
+
+<Note>
+  We're committed to helping integrators build successful USDC onramp experiences. Contact us to discuss your specific liquidity needs and get started with your exclusive seller network.
+</Note> 
