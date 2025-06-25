@@ -23,6 +23,7 @@
         "api-reference/integration-html",
         "api-reference/communication-protocol",
         "api-reference/technical-requirements",
+        "api-reference/webhooks",
         "api-reference/providing-usdc-liquidity"
       ]
     }

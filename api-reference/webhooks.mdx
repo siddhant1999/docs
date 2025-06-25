@@ -1,0 +1,184 @@
+---
+title: "Webhooks"
+description: "Set up webhooks to receive real-time notifications about order events"
+---
+
+## Overview
+
+Webhooks allow your application to receive real-time notifications when events occur in Phoenix. When an order is created or its status changes, Phoenix can automatically send an HTTP POST request to your specified webhook endpoints.
+
+## Getting Started
+
+### 1. Obtain Webhook API Key
+
+Before setting up webhooks, you need to obtain a webhook API key from Phoenix:
+
+1. Contact our support team at [main@phoenix.market](mailto:main@phoenix.market)
+2. Request webhook access for your integration
+3. You'll receive a `webhook_secret` that will be used for webhook authentication
+4. This key will be sent in the `Authorization` header as `Bearer <webhook_secret>`
+
+### 2. Configure Your Webhook Endpoints
+
+Your webhook endpoints should:
+- Accept POST requests
+- Return a `200` status code to acknowledge receipt
+- Process the webhook payload within 30 seconds
+- Validate the `Authorization` header
+- Handle duplicate events gracefully (use `orderId` for idempotency)
+
+## Order Creation Webhook
+
+### Endpoint Configuration
+**Endpoint**: `/phoenix-order-created`
+**Event Type**: `order.created`
+**Triggered**: When a new order is created in the Phoenix system
+
+### Implementation Example
+
+```javascript
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+app.post('/phoenix-order-created', (req, res) => {
+  const { order, timestamp, eventType } = req.body;
+  
+  // Validate required fields
+  if (!order || !order.id || !timestamp) {
+    return res.status(400).json({
+      error: 'Missing required fields',
+      required: ['order', 'order.id', 'timestamp']
+    });
+  }
+  
+  // Validate authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: 'Missing or invalid authorization header'
+    });
+  }
+  
+  // Process the new order
+  console.log(`New order created: ${order.id}`);
+  // Add your business logic here
+  
+  res.json({
+    success: true,
+    message: 'Order creation webhook received',
+    orderId: order.id
+  });
+});
+```
+
+### Payload Structure
+
+```json
+{
+  "order": {
+    "id": "Kx7mP2nQ8vR3sL9tF6wY4z",
+    "inputAmount": 1.52,
+    "minimumAmountOut": "1520000", // USDC amount with 1e6 decimals (1.52 USDC)
+    "verificationMethod": "teller-zelle-payment-verified-by-buyer-and-seller"
+  },
+  "timestamp": "2025-06-25T04:29:00.803Z",
+  "eventType": "order.created"
+}
+```
+
+## Order Status Update Webhook
+
+### Endpoint Configuration
+**Endpoint**: `/phoenix-order-status-updated`
+**Event Type**: `order.status.updated`
+**Triggered**: When an order's status changes
+
+### Common Status Values
+- `fulfilled` - Order has been completed successfully
+- `expired` - Order expired before completion
+- `pending` - Order is awaiting processing
+
+### Implementation Example
+
+```javascript
+app.post('/phoenix-order-status-updated', (req, res) => {
+  const { orderId, orderStatus, timestamp, eventType } = req.body;
+  
+  // Validate required fields
+  if (!orderId || !orderStatus || !timestamp) {
+    return res.status(400).json({
+      error: 'Missing required fields',
+      required: ['orderId', 'orderStatus', 'timestamp']
+    });
+  }
+  
+  // Validate authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: 'Missing or invalid authorization header'
+    });
+  }
+  
+  // Process the status update
+  console.log(`Order ${orderId} status changed to: ${orderStatus}`);
+  // Add your business logic here
+  
+  res.json({
+    success: true,
+    message: 'Order status webhook received',
+    orderId,
+    orderStatus
+  });
+});
+```
+
+### Payload Structure
+
+```json
+{
+  "orderId": "B5hN9xD3cW7qA2mE8pT6vL",
+  "orderStatus": "fulfilled",
+  "timestamp": "2025-06-25T02:55:33.615Z",
+  "eventType": "order.status.updated"
+}
+```
+
+## Authentication
+
+Phoenix uses Bearer token authentication for webhooks:
+
+- **Header**: `Authorization: Bearer <webhook_secret>`
+- **Webhook Secret**: Provided by Phoenix support team
+- **Validation**: Always verify the authorization header exists and contains a valid Bearer token
+
+```javascript
+// Authentication validation example
+const authHeader = req.headers.authorization;
+if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  return res.status(401).json({
+    error: 'Missing or invalid authorization header',
+    expected: 'Bearer <webhook_secret>'
+  });
+}
+
+const webhookSecret = authHeader.replace('Bearer ', '');
+// Verify this matches your provided webhook secret
+```
+
+## Best Practices
+
+1. **Validate Authentication**: Always check the `Authorization` header
+2. **Validate Required Fields**: Ensure all required fields are present
+3. **Implement Idempotency**: Use `orderId` to handle duplicate events
+4. **Respond Quickly**: Process webhooks within 30 seconds
+5. **Log Events**: Keep logs for debugging and monitoring
+6. **Use HTTPS**: Only accept webhooks over secure HTTPS connections
+7. **Handle Errors Gracefully**: Return appropriate HTTP status codes
+
+## Support
+
+For webhook-related questions or to request webhook access:
+- **Email**: [main@phoenix.market](mailto:main@phoenix.market)
