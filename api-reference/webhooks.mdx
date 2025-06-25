@@ -27,72 +27,57 @@ Your webhook endpoints should:
 - Validate the `Authorization` header
 - Handle duplicate events gracefully (use `orderId` for idempotency)
 
-## Order Creation Webhook
+## Querying Orders
 
-### Endpoint Configuration
-**Endpoint**: `/phoenix-order-created`
-**Event Type**: `order.created`
-**Triggered**: When a new order is created in the Phoenix system
+You can query order details at any time using the Phoenix API. This is useful for getting the complete order information or checking the current status.
 
-### Implementation Example
+<Note>
+You can use this endpoint to test your connection to the Phoenix service before setting up webhooks.
+</Note>
 
-```javascript
-const express = require('express');
-const app = express();
-
-app.use(express.json());
-
-app.post('/phoenix-order-created', (req, res) => {
-  const { order, timestamp, eventType } = req.body;
-  
-  // Validate required fields
-  if (!order || !order.id || !timestamp) {
-    return res.status(400).json({
-      error: 'Missing required fields',
-      required: ['order', 'order.id', 'timestamp']
-    });
-  }
-  
-  // Validate authorization header
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      error: 'Missing or invalid authorization header'
-    });
-  }
-  
-  // Process the new order
-  console.log(`New order created: ${order.id}`);
-  // Add your business logic here
-  
-  res.json({
-    success: true,
-    message: 'Order creation webhook received',
-    orderId: order.id
-  });
-});
+### Endpoint
+```
+GET https://prod-phoenix-api-kwr2.encr.app/orders/:orderId
 ```
 
-### Payload Structure
+### Example Request
+```javascript
+const orderId = "15LNf2PSt6G77W2iuL8MMb";
+const response = await fetch(`https://prod-phoenix-api-kwr2.encr.app/orders/${orderId}`);
+const orderData = await response.json();
+```
 
+### Example Response
+
+<Accordion title="View Example Response">
 ```json
 {
-  "order": {
-    "id": "Kx7mP2nQ8vR3sL9tF6wY4z",
-    "inputAmount": 1.52,
-    "minimumAmountOut": "1520000", // USDC amount with 1e6 decimals (1.52 USDC)
-    "verificationMethod": "teller-zelle-payment-verified-by-buyer-and-seller"
+  "id": "15LNf2PSt6G77W2iuL8MMb",
+  "autofill": true,
+  "createdAt": "2025-05-28T22:52:18.751Z",
+  "inputAmount": "10.1",
+  "minimumAmountOut": "10100000",
+  "uniquenessAmount": "0",
+  "verificationMethod": "teller-zelle-payment-verified-by-seller",
+  "orderStatus": {
+    "status": "fulfilled",
+    "updatedAt": "2025-05-28T22:54:32.459Z"
   },
-  "timestamp": "2025-06-25T04:29:00.803Z",
-  "eventType": "order.created"
+  "orderFulfillment": {
+    "createdAt": "2025-05-28T22:54:32.459Z",
+    "transaction": {
+      "hash": "0xba9af64850b7817d4d9d6f4f73045bf365946e03ab2fc493d5cd766671469f98"
+    }
+  }
 }
 ```
+</Accordion>
 
 ## Order Status Update Webhook
 
 ### Endpoint Configuration
 **Endpoint**: `/phoenix-order-status-updated`
-**Event Type**: `order.status.updated`
+**Event Type**: `order.status.change`
 **Triggered**: When an order's status changes
 
 ### Common Status Values
@@ -104,13 +89,14 @@ app.post('/phoenix-order-created', (req, res) => {
 
 ```javascript
 app.post('/phoenix-order-status-updated', (req, res) => {
-  const { orderId, orderStatus, timestamp, eventType } = req.body;
+  const { event, id, timestamp, data } = req.body;
+  const { order, orderId, orderStatus } = data;
   
   // Validate required fields
-  if (!orderId || !orderStatus || !timestamp) {
+  if (!event || !data || !data.orderId || !data.orderStatus) {
     return res.status(400).json({
       error: 'Missing required fields',
-      required: ['orderId', 'orderStatus', 'timestamp']
+      required: ['event', 'data.orderId', 'data.orderStatus']
     });
   }
   
@@ -123,28 +109,51 @@ app.post('/phoenix-order-status-updated', (req, res) => {
   }
   
   // Process the status update
-  console.log(`Order ${orderId} status changed to: ${orderStatus}`);
+  console.log(`Order ${data.orderId} status changed to: ${data.orderStatus}`);
   // Add your business logic here
   
   res.json({
     success: true,
     message: 'Order status webhook received',
-    orderId,
-    orderStatus
+    orderId: data.orderId,
+    orderStatus: data.orderStatus
   });
 });
 ```
 
 ### Payload Structure
 
+<Accordion title="View Payload Structure">
 ```json
 {
-  "orderId": "B5hN9xD3cW7qA2mE8pT6vL",
-  "orderStatus": "fulfilled",
-  "timestamp": "2025-06-25T02:55:33.615Z",
-  "eventType": "order.status.updated"
+  "event": "order.status.change",
+  "id": "evt_1750886808355_km9bcr5qc",
+  "timestamp": "2025-05-28 22:52:18.751",
+  "data": {
+    "order": {
+      "id": "15LNf2PSt6G77W2iuL8MMb",
+      "inputAmount": "10.1",
+      "minimumAmountOut": "10100000",
+      "verificationMethod": "teller-zelle-payment-verified-by-seller",
+      "createdAt": "2025-05-28T22:52:18.751Z",
+      "orderStatus": {
+        "status": "fulfilled",
+        "updatedAt": "2025-05-28T22:54:32.459Z"
+      },
+      "orderFulfillment": {
+        "transaction": {
+          "hash": "0xba9af64850b7817d4d9d6f4f73045bf365946e03ab2fc493d5cd766671469f98"
+        },
+        "createdAt": "2025-05-28T22:54:32.459Z"
+      }
+    },
+    "orderId": "15LNf2PSt6G77W2iuL8MMb",
+    "orderStatus": "fulfilled",
+    "timestamp": "2025-05-28 22:52:18.751"
+  }
 }
 ```
+</Accordion>
 
 ## Authentication
 
@@ -154,6 +163,7 @@ Phoenix uses Bearer token authentication for webhooks:
 - **Webhook Secret**: Provided by Phoenix support team
 - **Validation**: Always verify the authorization header exists and contains a valid Bearer token
 
+<Accordion title="View Authentication Code Example">
 ```javascript
 // Authentication validation example
 const authHeader = req.headers.authorization;
@@ -167,6 +177,7 @@ if (!authHeader || !authHeader.startsWith('Bearer ')) {
 const webhookSecret = authHeader.replace('Bearer ', '');
 // Verify this matches your provided webhook secret
 ```
+</Accordion>
 
 ## Best Practices
 
