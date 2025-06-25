@@ -15,10 +15,10 @@ Before setting up webhooks, you need to obtain a webhook API key from Phoenix:
 
 1. Contact our support team at [main@phoenix.market](mailto:main@phoenix.market)
 2. Request webhook access for your integration
-3. You'll receive a `webhook_secret` that will be used for webhook authentication
-4. This key will be sent in the `Authorization` header as `Bearer <webhook_secret>`
+3. You'll privately receive a `webhook_secret` value that will be used for webhook authentication
+4. This key will be sent to your API in the `Authorization` header as `Bearer <webhook_secret>` in each invocation of your webhook
 
-### 2. Configure Your Webhook Endpoints
+### 2. Define Your Webhook Endpoints
 
 Your webhook endpoints should:
 - Accept POST requests
@@ -26,6 +26,14 @@ Your webhook endpoints should:
 - Process the webhook payload within 30 seconds
 - Validate the `Authorization` header
 - Handle duplicate events gracefully (use `orderId` for idempotency)
+
+### 3. Share Your Webhook Endpoint URLs
+
+Once you've defined your webhook endpoints, you need to share the exact URLs with Phoenix:
+
+1. Determine the full URL path where you want to receive webhooks (e.g., `https://yourdomain.com/webhooks/phoenix-status-updates`)
+2. Contact our support team at [main@phoenix.market](mailto:main@phoenix.market) with your webhook endpoint URL
+3. Phoenix will configure the system to send webhook events to your specified URL
 
 ## Querying Orders
 
