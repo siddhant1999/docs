@@ -123,8 +123,7 @@ app.post('/phoenix-order-status-updated', (req, res) => {
   res.json({
     success: true,
     message: 'Order status webhook received',
-    orderId: data.orderId,
-    orderStatus: data.orderStatus
+    external_partner_id: "your-internal-order-123" // Optional: your own order ID
   });
 });
 ```
@@ -162,6 +161,28 @@ app.post('/phoenix-order-status-updated', (req, res) => {
 }
 ```
 </Accordion>
+
+### Webhook Response
+
+Your webhook endpoint should return a JSON response with a `200` status code. You can optionally include an `external_partner_id` field to associate your own order ID with the Phoenix order:
+
+```javascript
+// Basic response
+res.json({
+  success: true,
+  message: 'Order status webhook received'
+});
+
+// Response with optional external partner ID
+res.json({
+  success: true,
+  message: 'Order status webhook received',
+  external_partner_id: "your-internal-order-123" // Optional: your own order ID
+});
+```
+
+**Optional Response Field:**
+- `external_partner_id` (string): Your internal order ID or reference that you want to associate with the Phoenix order. This helps you link Phoenix orders to your own system's order tracking.
 
 ## Authentication
 
