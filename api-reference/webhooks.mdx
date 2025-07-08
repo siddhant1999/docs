@@ -1,6 +1,6 @@
 ---
 title: "Webhooks"
-description: "Set up webhooks to receive real-time notifications about order events"
+description: "Set up webhooks to receive real-time notifications about order & payment-link events"
 ---
 
 ## Overview
@@ -15,8 +15,6 @@ Before setting up webhooks, you need to obtain a webhook API key from Phoenix:
 
 1. Contact our support team at [main@phoenix.market](mailto:main@phoenix.market)
 2. Request webhook access for your integration
-3. You'll privately receive a `webhook_secret` value that will be used for webhook authentication
-4. This key will be sent to your API in the `Authorization` header as `Bearer <webhook_secret>` in each invocation of your webhook
 
 ### 2. Define Your Webhook Endpoints
 
@@ -24,8 +22,64 @@ Your webhook endpoints should:
 - Accept POST requests
 - Return a `200` status code to acknowledge receipt
 - Process the webhook payload within 30 seconds
-- Validate the `Authorization` header
-- Handle duplicate events gracefully (use `orderId` for idempotency)
+- Validate the HMAC signature in the `X-Webhook-Signature` header
+- Handle duplicate events gracefully (use `id` for idempotency)
+
+#### HMAC Signature
+
+Phoenix provides HMAC signatures to help you verify the authenticity of webhook requests. The signature is calculated using your `client_secret` and the payload of the request, allowing you to validate that the webhook came from Phoenix.
+
+The signature is sent in the `X-Webhook-Signature` header.
+
+The signature's timestamp is sent in the `X-Webhook-Timestamp` header.
+
+The signature is calculated using the HMAC-SHA256 algorithm.
+
+#### Signature Verification Example
+
+Here's how to verify the webhook signature in your endpoint:
+
+```javascript
+const crypto = require('crypto');
+
+// In your webhook endpoint
+app.post('/webhook', (req, res) => {
+  const signature = req.headers['x-webhook-signature']; // Or your custom header
+  const timestamp  = req.headers['x-webhook-timestamp'];
+  const rawBody = req.body; // Buffer, not parsed JSON!
+
+
+const endpointSecret = 'Your-clientsecret-key'
+
+  // Create the signed payload string
+  const signedPayload = `${timestamp}.${JSON.stringify(rawBody)}`;
+
+  // Compute the HMAC
+  const expectedSignature = crypto
+    .createHmac('sha256', endpointSecret)
+    .update(signedPayload)
+    .digest('hex');
+
+    console.log(expectedSignature);
+    console.log(signature);
+
+  // Compare signatures (use timingSafeEqual in production)
+  if (crypto.timingSafeEqual(
+    Buffer.from(expectedSignature, 'hex'),
+    Buffer.from(signature, 'hex')
+  )) {
+    // Signature is valid, process the event
+    console.log('Webhook verified!');
+    res.status(200).send('Webhook verified!');
+  } else {
+    console.log('Invalid signature');
+    // Invalid signature
+    res.status(400).send('Invalid signature');
+  }
+});
+```
+
+
 
 ### 3. Share Your Webhook Endpoint URLs
 
@@ -34,6 +88,201 @@ Once you've defined your webhook endpoints, you need to share the exact URLs wit
 1. Determine the full URL path where you want to receive webhooks (e.g., `https://yourdomain.com/webhooks/phoenix-status-updates`)
 2. Contact our support team at [main@phoenix.market](mailto:main@phoenix.market) with your webhook endpoint URL
 3. Phoenix will configure the system to send webhook events to your specified URL
+
+## Webhook Events
+Each webhook event contains a unique `id` field for deduplication. Implement idempotency using this `id` as Phoenix may retry events if your endpoint doesn't return a `200` status code or if the request fails.
+
+Current events:
+- `payment_link_created`
+- `payment_link_status_updated`
+- `order_created`
+- `order_status_updated`
+
+### Event Payload Structure
+This structure may change over time, so do stay up to date with the docs.
+
+```javascript
+{
+  "event": "",
+  "id": "xxx",
+  "timestamp": "1970-01-01T00:00:00.001Z",
+  "data": {
+    "paymentLink" || "order": {
+      "id": "xxx"
+    }
+  }
+}
+```
+
+<Accordion title="Payment Link Created Example Event">
+```javascript
+Method: POST
+URL: /webhook
+Headers: {
+  host: '***',
+  'user-agent': '***'
+  'content-length':  '***'
+  accept: 'application/json, text/plain, */*',
+  'accept-encoding': 'gzip, compress, deflate, br',
+  'content-type': 'application/json',
+  'x-forwarded-for':  '***',
+  'x-forwarded-host':  '***',
+  'x-forwarded-proto': 'https',
+  'x-webhook-signature': '3db257d7f7d709065c1ff85ed5616f1e4284e6863de0332d72099d8018f8d44b',
+  'x-webhook-timestamp': '1751933312535'
+}
+Body: {
+  event: 'payment_link_created',
+  id: 'evt_1751933312535_ubzthgo3p',
+  timestamp: '2025-07-08T00:08:32.494Z',
+  data: {
+    paymentLink: {
+      id: 'd1Rd7fLBg6oX1ipSm2FKb5',
+      integrator: {
+        id: '***'
+      },
+      lifespan: 86400000,
+      paymentLinkURL: 'https://app-partner.phoenix.market/?payment_id=d1Rd7fLBg6oX1ipSm2FKb5&address=0x00000000000000000000000000&amount=1.45&shareOn=true&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXJ0bmVyIjp7ImNsaWVudF9pZCI6IjBmMmM0NTZlLTUxZDAtNDNmOS1hZGM4LTgwMTNmNjFjODZmMCJ9LCJzY29wZSI6WyJpZnJhbWUiXSwidmVyc2lvbiI6IjEiLCJpYXQiOjE3NTE5Mjk3MzQsImV4cCI6MTc1MTkzMzMzNCwianRpIjoiZTA2MmVhODUtYzg0OS00ODAzLWIxNGEtNTAyZWUzYWEwMGQzIn0.okL0XnEQVRHdk0ClpWBEHpq63Kj1s6AI1gyiTTeuyNQ',
+      status: 'pending',
+      urlParams: 'address=0x00000000000000000000000000&amount=1.45&shareOn=true&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXJ0bmVyIjp7ImNsaWVudF9pZCI6IjBmMmM0NTZlLTUxZDAtNDNmOS1hZGM4LTgwMTNmNjFjODZmMCJ9LCJzY29wZSI6WyJpZnJhbWUiXSwidmVyc2lvbiI6IjEiLCJpYXQiOjE3NTE5Mjk3MzQsImV4cCI6MTc1MTkzMzMzNCwianRpIjoiZTA2MmVhODUtYzg0OS00ODAzLWIxNGEtNTAyZWUzYWEwMGQzIn0.okL0XnEQVRHdk0ClpWBEHpq63Kj1s6AI1gyiTTeuyNQ'
+    },
+    timestamp: '2025-07-08T00:08:32.494Z'
+  }
+}
+```
+</Accordion>
+
+
+<Accordion title="Payment Link Updated Example Event">
+```javascript
+Method: POST
+URL: /webhook
+Headers: {
+  host: '***',
+  'user-agent': '***'
+  'content-length':  '***'
+  accept: 'application/json, text/plain, */*',
+  'accept-encoding': 'gzip, compress, deflate, br',
+  'content-type': 'application/json',
+  'x-forwarded-for':  '***',
+  'x-forwarded-host':  '***',
+  'x-forwarded-proto': 'https',
+  'x-webhook-signature': '3db257d7f7d709065c1ff85ed5616f1e4284e6863de0332d72099d8018f8d44b',
+  'x-webhook-timestamp': '1751933312535'
+}
+Body: {
+  event: 'payment_link_status_updated',
+  id: 'evt_1751933531477_ftpul3jhi',
+  timestamp: '2025-07-08T00:12:11.448Z',
+  data: {
+    paymentLink: {
+      id: 'd1Rd7fLBg6oX1ipSm2FKb5',
+      lifespan: 86400000,
+      order: [Object],
+      urlParams: 'address=0x00000000000000000000000000&amount=1.45&shareOn=true&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXJ0bmVyIjp7ImNsaWVudF9pZCI6IjBmMmM0NTZlLTUxZDAtNDNmOS1hZGM4LTgwMTNmNjFjODZmMCJ9LCJzY29wZSI6WyJpZnJhbWUiXSwidmVyc2lvbiI6IjEiLCJpYXQiOjE3NTE5Mjk3MzQsImV4cCI6MTc1MTkzMzMzNCwianRpIjoiZTA2MmVhODUtYzg0OS00ODAzLWIxNGEtNTAyZWUzYWEwMGQzIn0.okL0XnEQVRHdk0ClpWBEHpq63Kj1s6AI1gyiTTeuyNQ',
+      paymentLinkURL: 'https://app-partner.phoenix.market/?payment_id=d1Rd7fLBg6oX1ipSm2FKb5&address=0x00000000000000000000000000&amount=1.45&shareOn=true&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXJ0bmVyIjp7ImNsaWVudF9pZCI6IjBmMmM0NTZlLTUxZDAtNDNmOS1hZGM4LTgwMTNmNjFjODZmMCJ9LCJzY29wZSI6WyJpZnJhbWUiXSwidmVyc2lvbiI6IjEiLCJpYXQiOjE3NTE5Mjk3MzQsImV4cCI6MTc1MTkzMzMzNCwianRpIjoiZTA2MmVhODUtYzg0OS00ODAzLWIxNGEtNTAyZWUzYWEwMGQzIn0.okL0XnEQVRHdk0ClpWBEHpq63Kj1s6AI1gyiTTeuyNQ',
+      status: 'consumed',
+      integrator: [Object],
+      createdAt: '2025-07-08T00:08:32.494Z',
+      updatedAt: '2025-07-08T00:12:11.469Z'
+    },
+    paymentLinkId: 'd1Rd7fLBg6oX1ipSm2FKb5',
+    paymentLinkStatus: 'consumed',
+    timestamp: '2025-07-08T00:12:11.448Z'
+  }
+}
+```
+</Accordion>
+
+<Accordion title="Order Created Example Event">
+```javascript
+Method: POST
+URL: /webhook
+Headers: {
+ host: '***',
+  'user-agent': '***'
+  'content-length':  '***'
+  accept: 'application/json, text/plain, */*',
+  'accept-encoding': 'gzip, compress, deflate, br',
+  'content-type': 'application/json',
+  'x-forwarded-for':  '***',
+  'x-forwarded-host':  '***',
+  'x-forwarded-proto': 'https',
+  'x-webhook-signature': '3db257d7f7d709065c1ff85ed5616f1e4284e6863de0332d72099d8018f8d44b',
+  'x-webhook-timestamp': '1751933312535'
+}
+Body: {
+  event: 'order_created',
+  id: 'evt_1751933531144_7v7af54ad',
+  timestamp: '2025-07-08T00:12:11.101Z',
+  data: {
+    order: {
+      autofill: true,
+      escrowContract: [Object],
+      id: '2WsGirssj5sy63fdKQkF7z',
+      inputAmount: 1.52,
+      integratorId: '0f2c456e-51d0-43f9-adc8-8013f61c86f0',
+      lifespan: 1500000,
+      minimumAmountOut: '1450000',
+      outputToken: [Object],
+      recipient: [Object],
+      seller: [Object],
+      uniquenessAmount: 0,
+      verificationMethod: 'teller-zelle-payment-verified-by-seller'
+    },
+    timestamp: '2025-07-08T00:12:11.101Z'
+  }
+}
+```
+</Accordion>
+<Accordion title="Order Updated Example Event">
+```javascript
+Method: POST
+URL: /webhook
+Headers: {
+ host: '***',
+  'user-agent': '***'
+  'content-length':  '***'
+  accept: 'application/json, text/plain, */*',
+  'accept-encoding': 'gzip, compress, deflate, br',
+  'content-type': 'application/json',
+  'x-forwarded-for':  '***',
+  'x-forwarded-host':  '***',
+  'x-forwarded-proto': 'https',
+  'x-webhook-signature': '3db257d7f7d709065c1ff85ed5616f1e4284e6863de0332d72099d8018f8d44b',
+  'x-webhook-timestamp': '1751933312535'
+}
+Body: {
+  event: 'order_status_change',
+  id: 'evt_1751934563333_hekop4cga',
+  timestamp: '2025-07-08T00:29:23.280Z',
+  data: {
+    order: {
+      id: '2WsGirssj5sy63fdKQkF7z',
+      minimumAmountOut: '1450000',
+      outputToken: [Object],
+      recipient: [Object],
+      inputAmount: '1.52',
+      escrowContract: [Object],
+      autofill: true,
+      uniquenessAmount: '0',
+      verificationMethod: 'teller-zelle-payment-verified-by-seller',
+      lifespan: 1500000,
+      external_partner_id: null,
+      integrator: [Object],
+      createdAt: '2025-07-08T00:12:11.101Z',
+      orderStatus: [Object],
+      orderVerification: [Object],
+      seller: [Object],
+      orderFulfillment: null
+    },
+    orderId: '2WsGirssj5sy63fdKQkF7z',
+    orderStatus: 'fulfilled',
+    timestamp: '2025-07-08T00:29:23.280Z'
+  }
+}
+```
+</Accordion>
 
 ## Querying Orders
 
@@ -212,7 +461,7 @@ const webhookSecret = authHeader.replace('Bearer ', '');
 
 1. **Validate Authentication**: Always check the `Authorization` header
 2. **Validate Required Fields**: Ensure all required fields are present
-3. **Implement Idempotency**: Use `orderId` to handle duplicate events
+3. **Implement Idempotency**: Use `id` to handle duplicate events
 4. **Respond Quickly**: Process webhooks within 30 seconds
 5. **Log Events**: Keep logs for debugging and monitoring
 6. **Use HTTPS**: Only accept webhooks over secure HTTPS connections
