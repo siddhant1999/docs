@@ -1,0 +1,60 @@
+---
+title: "Payment Links"
+description: "Payment Links enable your customers to send out payments to their friends & family"
+---
+
+## Overview
+
+Payment Links allow your customers to create shareable payment requests that are valid for 24 hours. Recipients can use these links to generate orders that are automatically linked to the original payment request.
+
+Currently Payment Links are only available within the iframe integration.
+
+### Statuses
+- `pending` - The payment link is pending and has not been consumed yet.
+- `consumed` - The payment link has been consumed and the order has been created.
+
+
+### To Enable Payment Links
+
+Pass the `shareOn=true` url parameter when creating your iframe url. 
+<Note>
+Payment Links require authentication. The `access_token` parameter is required for all payment link functionality.
+</Note>
+
+## URL Parameter Inheritance
+
+Payment links inherit all current URL parameters when generated. Any configuration parameters passed to the iframe will be preserved in the generated payment link URL.
+
+## Considerations
+
+- **Access Control**: Payment links require valid `access_token` authentication
+- **Link Expiration**: Links expire after 24 hours (86400000ms)
+- **One-time Use**: Each payment link can only be consumed once, once an order is created the payment link is marked as `consumed` and can no longer be used.
+
+
+## Asynchronous Flow Considerations
+
+Payment links are shared externally and opened outside your iframe context. If your integration relies on iframe events for order tracking, you must implement webhooks to receive order updates when payment links are used by external parties. See our [Webhooks documentation](/api-reference/webhooks) for implementation details.
+
+For order attribution, use the `order` field in the `payment_link_status_updated` webhook event. This enables you to link payment links to their resulting orders and track order status changes for attribution and business logic requirements.
+
+### iFrame Events
+
+The `PAYMENT_CREATED` event is dispatched when a payment link is successfully generated within the iframe.
+
+```javascript
+{
+  type: 'PAYMENT_CREATED',
+  data: {
+    id: "vzRTcMUcDWf58xP7THNtKA",
+    lifespan: 86400000,
+    order: null,
+    urlParams: "address=0x0&amount=1.46&shareOn=true&access_token=eyJhbGciOi...",
+    paymentLinkURL: "https://app-partner.phoenix.market/?payment_id=vzRTcMUcDWf58xP7THNtKA&address=0x0...",
+    status: "pending",
+    id: "2SERtJ2DPnkkTQbvnqyS5y",
+    createdAt: "2025-07-08T01:26:37.936Z",
+    updatedAt: "2025-07-08T01:26:37.936Z"
+  }
+}
+```
