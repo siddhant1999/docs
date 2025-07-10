@@ -104,6 +104,10 @@ All sellers are automatically added to Phoenix Market's order book. When a buyer
 - **Price Competitiveness**: Lower spreads get priority
 - **Transaction Limits**: Order must fall within seller's min/max limits
 
+<Warning>
+    Seller wallet addresses must be different from the recipient wallet addresses in orders. Sellers will not be matched with orders where the recipient address is their own wallet.
+</Warning>
+
 ## Creating a Private Seller Network
 
 Integrators can create private networks of sellers specifically for their users, ensuring better control over liquidity and user experience.
